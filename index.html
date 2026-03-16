@@ -1,0 +1,914 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseSP | Chuva e Alagamentos</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #06131a;
+      --panel: #0b2029;
+      --panel-2: #102b36;
+      --line: #1f4757;
+      --text: #d8ebf2;
+      --muted: #88aebd;
+      --accent: #35d8ff;
+      --ok: #3ce98c;
+      --warn: #ffc34f;
+      --danger: #ff5a6f;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      --font-ui: "Space Grotesk", sans-serif;
+      --font-mono: "JetBrains Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(53, 216, 255, 0.08), transparent 35%),
+        radial-gradient(circle at 85% 0%, rgba(255, 90, 111, 0.08), transparent 30%),
+        linear-gradient(135deg, #041015 0%, #081c24 45%, #06131a 100%);
+      color: var(--text);
+      font-family: var(--font-ui);
+      padding: 18px;
+    }
+
+    .app-shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+      grid-template-rows: auto auto 1fr auto;
+    }
+
+    .topbar {
+      background: rgba(11, 32, 41, 0.9);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand h1 {
+      font-size: 1.05rem;
+      font-family: var(--font-mono);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .brand p {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .grow {
+      flex: 1;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .dot.ok {
+      background: var(--ok);
+      box-shadow: 0 0 0 6px rgba(60, 233, 140, 0.12);
+    }
+
+    .dot.warn {
+      background: var(--warn);
+      box-shadow: 0 0 0 6px rgba(255, 195, 79, 0.12);
+    }
+
+    .dot.danger {
+      background: var(--danger);
+      box-shadow: 0 0 0 6px rgba(255, 90, 111, 0.12);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: rgba(11, 32, 41, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+      min-height: 94px;
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .metric-value {
+      font-size: 1.9rem;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .metric-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 300px minmax(520px, 1fr) 340px;
+      gap: 12px;
+      min-height: 520px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(11, 32, 41, 0.92);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+
+    .panel-body {
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .field select,
+    .field button {
+      border: 1px solid var(--line);
+      background: #0f2833;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+    }
+
+    .field button {
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .field button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .field button.primary {
+      background: linear-gradient(120deg, #0f2f3d, #164353);
+      border-color: #2d6073;
+    }
+
+    .legend {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      background: rgba(16, 43, 54, 0.7);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .map-stage {
+      position: relative;
+      min-height: 100%;
+      background:
+        linear-gradient(145deg, rgba(7, 26, 34, 0.95), rgba(9, 34, 42, 0.95)),
+        repeating-linear-gradient(
+          45deg,
+          rgba(53, 216, 255, 0.03) 0,
+          rgba(53, 216, 255, 0.03) 10px,
+          transparent 10px,
+          transparent 20px
+        );
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+    }
+
+    .map-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+    }
+
+    .map-canvas {
+      border: 1px dashed #2e6376;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 70% 30%, rgba(53, 216, 255, 0.12), transparent 38%),
+        radial-gradient(circle at 30% 72%, rgba(255, 90, 111, 0.12), transparent 35%),
+        linear-gradient(180deg, #0a2129, #091920);
+    }
+
+    .map-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .spot {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      transform: translate(-50%, -50%);
+      opacity: 0.9;
+      animation: pulse 2.3s infinite;
+    }
+
+    .spot.low { background: var(--ok); }
+    .spot.medium { background: var(--warn); }
+    .spot.high,
+    .spot.critical { background: var(--danger); }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 90, 111, 0.45); }
+      70% { box-shadow: 0 0 0 14px rgba(255, 90, 111, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 90, 111, 0); }
+    }
+
+    .map-note {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .alerts-list,
+    .predictions-list {
+      display: grid;
+      gap: 8px;
+      max-height: 100%;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .alert-item {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .alert-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .alert-meta {
+      font-size: 0.77rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    .alert-desc {
+      font-size: 0.82rem;
+      color: #c5dce6;
+      line-height: 1.35;
+    }
+
+    .risk-tag {
+      border: 1px solid;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .risk-tag.low { color: var(--ok); border-color: #2ea566; }
+    .risk-tag.medium { color: var(--warn); border-color: #a97720; }
+    .risk-tag.high { color: #ff8a99; border-color: #ab4250; }
+    .risk-tag.critical { color: var(--danger); border-color: #b23446; }
+
+    .footer-panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(11, 32, 41, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 780px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      padding: 10px 12px;
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: rgba(16, 43, 54, 0.5);
+    }
+
+    tr:hover td {
+      background: rgba(53, 216, 255, 0.05);
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 16px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1150px) {
+      .metrics {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+        min-height: unset;
+      }
+
+      .panel {
+        min-height: 280px;
+      }
+
+      .map-stage {
+        min-height: 390px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 12px;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>PulseSP</h1>
+        <p>Monitoramento de chuva, alagamentos e previsao de incidentes em Sao Paulo</p>
+      </div>
+
+      <div class="grow"></div>
+
+      <div class="badge" id="apiStatusBadge">
+        <span class="dot ok" id="apiStatusDot"></span>
+        <span id="apiStatusText">Modo local: front-end</span>
+      </div>
+
+      <div class="badge">
+        <span>Ultima atualizacao:</span>
+        <span id="lastSync">--:--:--</span>
+      </div>
+    </header>
+
+    <section class="metrics">
+      <article class="metric-card">
+        <p class="metric-label">Chuva 24h (mm)</p>
+        <h2 class="metric-value" id="metricRain24h">--</h2>
+        <p class="metric-sub">acumulado medio na cidade</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Pontos de alagamento ativos</p>
+        <h2 class="metric-value" id="metricFloodPoints">--</h2>
+        <p class="metric-sub">dados operacionais em campo</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Risco medio (0-100)</p>
+        <h2 class="metric-value" id="metricAvgRisk">--</h2>
+        <p class="metric-sub">resultado da analise de risco</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Incidentes no dia</p>
+        <h2 class="metric-value" id="metricIncidentsToday">--</h2>
+        <p class="metric-sub">ocorrencias consolidadas</p>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <aside class="panel">
+        <div class="panel-head">
+          <span>Filtros e Operacao</span>
+          <span>Front-end</span>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label for="regionSelect">Regiao de Sao Paulo</label>
+            <select id="regionSelect">
+              <option value="all">Todas</option>
+              <option value="Centro">Centro</option>
+              <option value="Norte">Norte</option>
+              <option value="Sul">Sul</option>
+              <option value="Leste">Leste</option>
+              <option value="Oeste">Oeste</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="horizonSelect">Horizonte de previsao</label>
+            <select id="horizonSelect">
+              <option value="6">Proximas 6 horas</option>
+              <option value="12" selected>Proximas 12 horas</option>
+              <option value="24">Proximas 24 horas</option>
+              <option value="48">Proximas 48 horas</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <button class="primary" id="btnRefresh">Atualizar dados agora</button>
+          </div>
+
+          <div class="field">
+            <button id="btnStream">Iniciar simulacao local</button>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="legend-color" style="background: var(--ok);"></span>Risco baixo</div>
+            <div class="legend-item"><span class="legend-color" style="background: var(--warn);"></span>Risco medio</div>
+            <div class="legend-item"><span class="legend-color" style="background: var(--danger);"></span>Risco alto/critico</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span>Tempo atual</span>
+              <span>Dados locais</span>
+            </div>
+            <div class="panel-body" id="weatherNow">
+              <p class="metric-sub">Temperatura: -- C</p>
+              <p class="metric-sub">Umidade: -- %</p>
+              <p class="metric-sub">Vento: -- km/h</p>
+              <p class="metric-sub">Chuva instantanea: -- mm/h</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <article class="panel">
+        <div class="map-stage">
+          <div class="map-toolbar">
+            <span class="pill">Area de mapa/heatmap</span>
+            <span class="pill">Conectar com Leaflet, Mapbox ou deck.gl</span>
+          </div>
+
+          <div class="map-canvas">
+            <div class="map-overlay" id="mapSpots"></div>
+          </div>
+
+          <p class="map-note" id="incidentSummary">
+            Nenhuma previsao carregada.
+          </p>
+        </div>
+      </article>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <span>Alertas recentes</span>
+          <span id="alertsCount">0 itens</span>
+        </div>
+        <div class="panel-body" style="height: 100%;">
+          <div class="alerts-list" id="alertsList"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="footer-panel">
+      <div class="panel-head">
+        <span>Previsao de incidentes por bairro</span>
+        <span>Base para modelo preditivo Python</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Regiao</th>
+              <th>Bairro</th>
+              <th>Score de risco</th>
+              <th>Confianca</th>
+              <th>Janela (h)</th>
+              <th>Tipo previsto</th>
+            </tr>
+          </thead>
+          <tbody id="predictionsBody">
+            <tr>
+              <td colspan="6" class="empty">Carregando previsoes...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const SEED_DATA = {
+      metrics: {
+        rain_24h_mm: 46.7,
+        active_flood_points: 18,
+        avg_risk_score: 63,
+        incidents_today: 22
+      },
+      weather: {
+        temperature_c: 25.4,
+        humidity_pct: 84,
+        wind_kmh: 17,
+        rain_rate_mmh: 6.8
+      },
+      alerts: [
+        {
+          id: "a-1",
+          region: "Centro",
+          title: "Transbordamento no eixo Tamanduatei",
+          description: "Interdicao parcial em vias de baixo relevo.",
+          level: "critical",
+          timestamp: "08:12"
+        },
+        {
+          id: "a-2",
+          region: "Sul",
+          title: "Acumulo intenso em Capao Redondo",
+          description: "Chuva acima da media nas ultimas 2 horas.",
+          level: "high",
+          timestamp: "08:05"
+        },
+        {
+          id: "a-3",
+          region: "Leste",
+          title: "Alerta preventivo em Itaquera",
+          description: "Nivel de corrego subindo rapidamente.",
+          level: "medium",
+          timestamp: "07:54"
+        }
+      ],
+      predictions: [
+        { region: "Centro", neighborhood: "Bras", risk_score: 88, confidence: 0.87, eta_hours: 3, incident_type: "alagamento severo" },
+        { region: "Centro", neighborhood: "Mooca", risk_score: 74, confidence: 0.79, eta_hours: 6, incident_type: "alagamento" },
+        { region: "Sul", neighborhood: "Santo Amaro", risk_score: 67, confidence: 0.72, eta_hours: 8, incident_type: "enxurrada" },
+        { region: "Leste", neighborhood: "Itaquera", risk_score: 56, confidence: 0.69, eta_hours: 10, incident_type: "acumulo em vias" },
+        { region: "Norte", neighborhood: "Santana", risk_score: 32, confidence: 0.64, eta_hours: 14, incident_type: "monitoramento" },
+        { region: "Oeste", neighborhood: "Butanta", risk_score: 61, confidence: 0.76, eta_hours: 7, incident_type: "alagamento pontual" }
+      ]
+    };
+
+    const state = {
+      metrics: null,
+      weather: null,
+      alerts: [],
+      predictions: [],
+      simulationOn: false,
+      simulationId: null
+    };
+
+    function cloneData(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function nowClock() {
+      return new Date().toLocaleTimeString("pt-BR");
+    }
+
+    function riskBand(score) {
+      if (score >= 80) return "critical";
+      if (score >= 60) return "high";
+      if (score >= 35) return "medium";
+      return "low";
+    }
+
+    function setLocalStatus() {
+      const dot = document.getElementById("apiStatusDot");
+      const text = document.getElementById("apiStatusText");
+      dot.className = "dot ok";
+      text.textContent = "Modo local: front-end";
+    }
+
+    function renderMetrics() {
+      const m = state.metrics || {};
+      document.getElementById("metricRain24h").textContent = Number(m.rain_24h_mm ?? 0).toFixed(1);
+      document.getElementById("metricFloodPoints").textContent = String(m.active_flood_points ?? 0);
+      document.getElementById("metricAvgRisk").textContent = String(m.avg_risk_score ?? 0);
+      document.getElementById("metricIncidentsToday").textContent = String(m.incidents_today ?? 0);
+    }
+
+    function renderWeather() {
+      const w = state.weather || {};
+      document.getElementById("weatherNow").innerHTML = `
+        <p class="metric-sub">Temperatura: ${Number(w.temperature_c ?? 0).toFixed(1)} C</p>
+        <p class="metric-sub">Umidade: ${Math.round(w.humidity_pct ?? 0)} %</p>
+        <p class="metric-sub">Vento: ${Math.round(w.wind_kmh ?? 0)} km/h</p>
+        <p class="metric-sub">Chuva instantanea: ${Number(w.rain_rate_mmh ?? 0).toFixed(1)} mm/h</p>
+      `;
+    }
+
+    function renderAlerts() {
+      const list = document.getElementById("alertsList");
+      document.getElementById("alertsCount").textContent = `${state.alerts.length} itens`;
+
+      if (!state.alerts.length) {
+        list.innerHTML = '<p class="empty">Sem alertas no momento.</p>';
+        return;
+      }
+
+      list.innerHTML = state.alerts.map(alert => {
+        const level = alert.level || riskBand(alert.risk_score || 0);
+
+        return `
+          <article class="alert-item">
+            <div class="alert-top">
+              <span>${alert.title}</span>
+              <span class="risk-tag ${level}">${level}</span>
+            </div>
+            <div class="alert-meta">${alert.region} | ${alert.timestamp || "--:--"}</div>
+            <p class="alert-desc">${alert.description}</p>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function filteredPredictions() {
+      const region = document.getElementById("regionSelect").value;
+      const horizon = Number(document.getElementById("horizonSelect").value);
+
+      return state.predictions
+        .filter(p => region === "all" || p.region === region)
+        .filter(p => Number(p.eta_hours || 0) <= horizon)
+        .sort((a, b) => b.risk_score - a.risk_score);
+    }
+
+    function renderPredictions() {
+      const rows = filteredPredictions();
+      const tbody = document.getElementById("predictionsBody");
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma previsao para os filtros atuais.</td></tr>';
+        document.getElementById("incidentSummary").textContent = "Nenhuma previsao dentro do horizonte selecionado.";
+        renderMapSpots([]);
+        return;
+      }
+
+      tbody.innerHTML = rows.map(item => {
+        const level = riskBand(item.risk_score);
+        return `
+          <tr>
+            <td>${item.region}</td>
+            <td>${item.neighborhood}</td>
+            <td><span class="risk-tag ${level}">${item.risk_score}</span></td>
+            <td>${Math.round((item.confidence || 0) * 100)}%</td>
+            <td>${item.eta_hours}</td>
+            <td>${item.incident_type}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const highCount = rows.filter(r => r.risk_score >= 60).length;
+      document.getElementById("incidentSummary").textContent =
+        `${rows.length} previsoes no horizonte atual | ${highCount} com risco alto/critico.`;
+
+      renderMapSpots(rows);
+    }
+
+    function pseudoPos(seed) {
+      let hash = 0;
+      const text = String(seed || "seed");
+      for (let i = 0; i < text.length; i += 1) {
+        hash = (hash << 5) - hash + text.charCodeAt(i);
+        hash |= 0;
+      }
+      const x = Math.abs((hash * 17) % 84) + 8;
+      const y = Math.abs((hash * 37) % 74) + 12;
+      return { x, y };
+    }
+
+    function renderMapSpots(predictions) {
+      const overlay = document.getElementById("mapSpots");
+      overlay.innerHTML = "";
+
+      predictions.slice(0, 12).forEach(item => {
+        const pos = pseudoPos(`${item.region}-${item.neighborhood}`);
+        const level = riskBand(item.risk_score);
+        const spot = document.createElement("span");
+
+        spot.className = `spot ${level}`;
+        spot.style.left = `${pos.x}%`;
+        spot.style.top = `${pos.y}%`;
+        spot.title = `${item.neighborhood} | risco ${item.risk_score}`;
+
+        overlay.appendChild(spot);
+      });
+    }
+
+    function recalcMetrics() {
+      const avgRisk = state.predictions.reduce((sum, item) => sum + item.risk_score, 0) / Math.max(state.predictions.length, 1);
+      const criticalCount = state.predictions.filter(item => item.risk_score >= 80).length;
+      const highCount = state.predictions.filter(item => item.risk_score >= 60).length;
+      const rainImpact = Math.round((state.weather.rain_rate_mmh || 0) * 1.5);
+
+      state.metrics.avg_risk_score = Math.round(avgRisk);
+      state.metrics.active_flood_points = Math.max(0, highCount + criticalCount + rainImpact);
+      state.metrics.incidents_today = Math.max(state.alerts.length, criticalCount + highCount);
+      state.metrics.rain_24h_mm = Number(Math.max(0, state.metrics.rain_24h_mm).toFixed(1));
+    }
+
+    function renderAll() {
+      renderMetrics();
+      renderWeather();
+      renderAlerts();
+      renderPredictions();
+      document.getElementById("lastSync").textContent = nowClock();
+    }
+
+    function loadLocalData() {
+      state.metrics = cloneData(SEED_DATA.metrics);
+      state.weather = cloneData(SEED_DATA.weather);
+      state.alerts = cloneData(SEED_DATA.alerts);
+      state.predictions = cloneData(SEED_DATA.predictions);
+      recalcMetrics();
+      renderAll();
+    }
+
+    function applySimulationStep() {
+      state.predictions = state.predictions.map(item => {
+        const drift = Math.round((Math.random() - 0.42) * 10);
+        const nextRisk = Math.min(99, Math.max(8, item.risk_score + drift));
+        const etaShift = Math.max(1, item.eta_hours + (Math.random() > 0.6 ? -1 : 0));
+        return { ...item, risk_score: nextRisk, eta_hours: etaShift };
+      });
+
+      state.weather.temperature_c = Number((state.weather.temperature_c + (Math.random() - 0.52) * 0.6).toFixed(1));
+      state.weather.humidity_pct = Math.min(100, Math.max(40, Math.round(state.weather.humidity_pct + (Math.random() - 0.45) * 4)));
+      state.weather.wind_kmh = Math.max(0, Math.round(state.weather.wind_kmh + (Math.random() - 0.5) * 3));
+      state.weather.rain_rate_mmh = Number(Math.max(0, state.weather.rain_rate_mmh + (Math.random() - 0.35) * 1.1).toFixed(1));
+      state.metrics.rain_24h_mm = Number(Math.max(0, state.metrics.rain_24h_mm + (Math.random() - 0.2) * 1.3).toFixed(1));
+
+      const topRisk = [...state.predictions].sort((a, b) => b.risk_score - a.risk_score)[0];
+      if (topRisk && topRisk.risk_score >= 85) {
+        state.alerts = [
+          {
+            id: `sim-${Date.now()}`,
+            region: topRisk.region,
+            title: `Risco elevado em ${topRisk.neighborhood}`,
+            description: `Simulacao local detectou risco ${topRisk.risk_score} para ${topRisk.incident_type}.`,
+            level: riskBand(topRisk.risk_score),
+            timestamp: nowClock()
+          },
+          ...state.alerts
+        ].slice(0, 8);
+      }
+
+      recalcMetrics();
+      renderAll();
+    }
+
+    function toggleSimulation() {
+      const button = document.getElementById("btnStream");
+
+      if (state.simulationOn) {
+        clearInterval(state.simulationId);
+        state.simulationId = null;
+        state.simulationOn = false;
+        button.textContent = "Iniciar simulacao local";
+        return;
+      }
+
+      state.simulationOn = true;
+      button.textContent = "Parar simulacao local";
+      state.simulationId = setInterval(applySimulationStep, 5000);
+    }
+
+    function initEvents() {
+      document.getElementById("btnRefresh").addEventListener("click", applySimulationStep);
+      document.getElementById("regionSelect").addEventListener("change", renderPredictions);
+      document.getElementById("horizonSelect").addEventListener("change", renderPredictions);
+      document.getElementById("btnStream").addEventListener("click", toggleSimulation);
+    }
+
+    function startApp() {
+      setLocalStatus();
+      initEvents();
+      loadLocalData();
+    }
+
+    startApp();
+  </script>
+</body>
+</html>
