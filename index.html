@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
@@ -243,13 +243,19 @@ path.pulse-poly { animation: pulse-poly-critical 1.8s infinite !important; strok
 ════════════════════════════════════════════════════ */
 
 // Inicia apenas se a biblioteca do Leaflet (mapa) for detectada
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
   if (typeof L === "undefined") {
     document.getElementById("mapLoading").style.display = "none"; 
     document.getElementById("mapError").style.display = "flex"; 
     return;
   }
-  initApp();
+  try {
+    await initApp();
+  } catch (err) {
+    console.error("Falha ao inicializar o painel:", err);
+    document.getElementById("mapLoading").style.display = "none";
+    document.getElementById("mapError").style.display = "flex";
+  }
 });
 
 function riskColor(r){ return r>=80?"#ef4444":r>=60?"#f97316":r>=35?"#f59e0b":"#22c55e"; }
@@ -279,7 +285,7 @@ function buildPopup(s, districtName) {
   '</div>';
 }
 
-function initApp() {
+async function initApp() {
   var map = L.map("map", { zoomControl:false, center:[-23.4750,-46.6100], zoom:12, zoomSnap:0.5 });
   L.control.zoom({ position: 'topleft' }).addTo(map);
 
@@ -302,13 +308,49 @@ function initApp() {
     "VILA MARIA": "MG", "VILA GUILHERME": "MG", "VILA MEDEIROS": "MG"
   };
 
-  // Nossos dados de risco em tempo real
+  // Dados iniciais (fallback local), depois sobrepostos pelos dados da API.
   const SUBPREFS = {
     "CV": { id: "CV", name: "Subpref. Casa Verde", short: "Casa Verde", color: "#22c55e", temp: 24.5, hum: 80, rain: 5.7,  wind: 12, risk: 48, lat: -23.490, lng: -46.660 },
     "ST": { id: "ST", name: "Subpref. Santana",    short: "Santana",    color: "#3b82f6", temp: 25.1, hum: 82, rain: 12.4, wind: 16, risk: 88, lat: -23.485, lng: -46.615 },
     "JT": { id: "JT", name: "Subpref. Jaçanã",     short: "Jaçanã",     color: "#a855f7", temp: 23.8, hum: 88, rain: 15.1, wind: 18, risk: 92, lat: -23.445, lng: -46.585 },
     "MG": { id: "MG", name: "Subpref. Vila Maria", short: "Vila Maria", color: "#f97316", temp: 25.4, hum: 86, rain: 10.5, wind: 11, risk: 68, lat: -23.510, lng: -46.585 }
   };
+
+  const API_BASE = (window.CLIMASP_API_BASE || "http://localhost:8000").replace(/\/$/, "");
+
+  function toNum(v, fallback) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  async function hydrateFromBackend() {
+    try {
+      const response = await fetch(API_BASE + "/api/v1/weather/current", { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const payload = await response.json();
+      const regions = payload && payload.regions ? payload.regions : {};
+
+      Object.keys(regions).forEach((regionCode) => {
+        const apiReg = regions[regionCode];
+        if (!SUBPREFS[regionCode] || !apiReg) return;
+        Object.assign(SUBPREFS[regionCode], {
+          name: apiReg.name || SUBPREFS[regionCode].name,
+          short: apiReg.short || SUBPREFS[regionCode].short,
+          temp: toNum(apiReg.temp, SUBPREFS[regionCode].temp),
+          hum: Math.round(toNum(apiReg.hum, SUBPREFS[regionCode].hum)),
+          rain: toNum(apiReg.rain, SUBPREFS[regionCode].rain),
+          wind: toNum(apiReg.wind, SUBPREFS[regionCode].wind),
+          risk: Math.round(toNum(apiReg.risk, SUBPREFS[regionCode].risk)),
+          lat: toNum(apiReg.lat, SUBPREFS[regionCode].lat),
+          lng: toNum(apiReg.lng, SUBPREFS[regionCode].lng)
+        });
+      });
+    } catch (err) {
+      console.warn("Backend indisponível. Mantendo dados locais de contingência.", err);
+    }
+  }
+
+  await hydrateFromBackend();
 
   // Função para ler as propriedades do GeoJSON oficial
   function identifyDistrict(props) {
