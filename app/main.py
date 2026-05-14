@@ -1,26 +1,44 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from app.api.deps import (
     close_singletons,
+    get_news_repository,
     get_scheduler_service,
     get_storage_service,
     get_weather_service,
 )
-from app.api.v1.health import router as health_router
-from app.api.v1.weather import router as weather_router
+from app.controllers.router import api_router
 from app.core.config import get_settings
 from app.db.init_db import init_db
 from app.db.session import AsyncSessionLocal
-from app.schemas.weather import ApiInfoResponse
 from app.services.exceptions import ServiceError
+from app.services.news_scraper_service import scrape_all_sources
+from app.views.weather_views import ApiInfoResponse
 
 settings = get_settings()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+async def _run_news_scrape() -> None:
+    """Coleta notícias RSS e persiste artigos relevantes."""
+    try:
+        articles, _ = await scrape_all_sources()
+        if articles:
+            news_repo = get_news_repository()
+            async with AsyncSessionLocal() as session:
+                new = await news_repo.save_many(session, articles)
+                if new:
+                    print(f"[NewsScraper] {new} artigo(s) novo(s) salvo(s).")
+    except Exception as exc:
+        print(f"[NewsScraper] Erro durante scraping: {exc}")
 
 
 @asynccontextmanager
@@ -45,10 +63,14 @@ async def lifespan(_: FastAPI):
                 forecast_retention_hours=settings.forecast_retention_hours,
             )
         except Exception:
-            # Mantemos a aplicacao de pe para o frontend iniciar mesmo sem fonte externa.
             pass
 
+    # Primeira coleta de notícias na inicialização
+    await _run_news_scrape()
+
+    # Agenda scraping de notícias a cada 30 min junto com o scheduler de clima
     scheduler.start()
+    scheduler.add_job(_run_news_scrape, interval_minutes=30, job_id="news_scraper")
 
     try:
         yield
@@ -60,7 +82,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Backend de monitoramento climatico em tempo real para Sao Paulo.",
+    description="Backend MVC de monitoramento climático e alagamentos em São Paulo.",
     lifespan=lifespan,
 )
 
@@ -72,26 +94,14 @@ app.add_middleware(
     allow_credentials=False,
 )
 
-app.include_router(health_router)
-app.include_router(weather_router, prefix=settings.api_prefix)
+app.include_router(api_router, prefix=settings.api_prefix)
 
 
 @app.exception_handler(ServiceError)
 async def service_error_handler(_: Request, exc: ServiceError) -> JSONResponse:
-    return JSONResponse(
-        status_code=503,
-        content={
-            "error": "service_unavailable",
-            "detail": str(exc),
-        },
-    )
+    return JSONResponse(status_code=503, content={"error": "service_unavailable", "detail": str(exc)})
 
 
-@app.get("/", response_model=ApiInfoResponse)
-async def root() -> ApiInfoResponse:
-    return ApiInfoResponse(
-        name=settings.app_name,
-        version=settings.app_version,
-        description="API para monitoramento climatico, previsao e historico por regiao.",
-        docs_url="/docs",
-    )
+@app.get("/")
+async def root() -> FileResponse:
+    return FileResponse(str(BASE_DIR / "index.html"), media_type="text/html")

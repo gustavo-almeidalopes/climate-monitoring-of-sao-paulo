@@ -2,7 +2,7 @@
 
 from app.db.base import Base
 from app.db.session import engine
-from app.models import forecast_reading, region, weather_reading  # noqa: F401
+from app.models import forecast_reading, news_article, region, weather_reading  # noqa: F401
 
 
 async def init_db() -> None:

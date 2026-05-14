@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     history_retention_days: int = 30
     forecast_retention_hours: int = 96
 
+    # INMET (Instituto Nacional de Meteorologia) — API pública brasileira
+    inmet_url: str = "https://apitempo.inmet.gov.br/estacao"
+    inmet_api_key: str | None = None
+
+    # ML
+    ml_model_path: str = "models/flood_risk_model.joblib"
+    ml_training_history_years: int = 2
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

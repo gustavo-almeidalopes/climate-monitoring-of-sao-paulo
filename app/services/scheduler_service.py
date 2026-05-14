@@ -107,6 +107,18 @@ class SchedulerService:
             "last_error": self._last_error,
         }
 
+    def add_job(self, func, *, interval_minutes: int, job_id: str) -> None:
+        """Adiciona um job periódico ao scheduler (deve ser chamado após start())."""
+        self.scheduler.add_job(
+            func,
+            trigger="interval",
+            minutes=max(1, interval_minutes),
+            id=job_id,
+            max_instances=1,
+            coalesce=True,
+            replace_existing=True,
+        )
+
     def shutdown(self) -> None:
         if not self._started:
             return

@@ -2,6 +2,7 @@
 
 import asyncio
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,11 +19,20 @@ from app.services.types import (
     ProviderHealthState,
 )
 
+if TYPE_CHECKING:
+    from app.services.ml_prediction_service import MLPredictionService
+
 
 class WeatherService:
-    def __init__(self, providers: list[WeatherProvider], storage: StorageService) -> None:
+    def __init__(
+        self,
+        providers: list[WeatherProvider],
+        storage: StorageService,
+        ml_service: MLPredictionService | None = None,
+    ) -> None:
         self.providers = providers
         self.storage = storage
+        self.ml_service = ml_service
         self.settings = get_settings()
         self._refresh_lock = asyncio.Lock()
         self._health: dict[str, ProviderHealthState] = {
@@ -130,13 +140,26 @@ class WeatherService:
                 return cached
             raise
 
-        risk = calculate_flood_risk(
+        ml_risk = None
+        if self.ml_service is not None:
+            ml_risk = await self.ml_service.predict_risk(
+                session=session,
+                region_code=region.code,
+                rain_mm=current.rain_mm,
+                humidity_percent=current.humidity_percent,
+                temperature_c=current.temperature_c,
+                wind_kmh=current.wind_kmh,
+                observed_at=current.observed_at,
+            )
+
+        heuristic_risk = calculate_flood_risk(
             rain_mm=current.rain_mm,
             humidity_percent=current.humidity_percent,
             wind_kmh=current.wind_kmh,
             temperature_c=current.temperature_c,
             aqi=current.aqi,
         )
+        risk = ml_risk if ml_risk is not None else heuristic_risk
 
         reading_row = await self.storage.save_current_reading(session, current, risk)
 

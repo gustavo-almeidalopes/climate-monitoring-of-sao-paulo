@@ -1,4 +1,4 @@
-﻿fastapi==0.115.12
+fastapi==0.115.12
 uvicorn[standard]==0.34.0
 httpx==0.28.1
 SQLAlchemy==2.0.39
@@ -6,3 +6,11 @@ aiosqlite==0.21.0
 pydantic-settings==2.9.1
 APScheduler==3.10.4
 python-dotenv==1.0.1
+a2wsgi==1.10.7
+aiofiles==23.2.1
+
+# ML / Data Science (opcional — o app funciona sem estes usando o heurístico como fallback)
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==1.26.4
+joblib==1.4.2
