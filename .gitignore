@@ -1,0 +1,27 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Local database & ML artifacts
+*.db
+*.sqlite3
+models/*.joblib
+
+# Brainstorm / tooling scratch
+.superpowers/
+.vercel/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
