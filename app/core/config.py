@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from functools import lru_cache
 
@@ -38,9 +38,19 @@ class Settings(BaseSettings):
     inmet_url: str = "https://apitempo.inmet.gov.br/estacao"
     inmet_api_key: str | None = None
 
-    # ML
+    # ML — dados históricos reais (Open-Meteo Archive / ERA5) + previsão de chuva forte
     ml_model_path: str = "models/flood_risk_model.joblib"
-    ml_training_history_years: int = 2
+    ml_training_history_years: int = 3
+    open_meteo_archive_url: str = "https://archive-api.open-meteo.com/v1/archive"
+    ml_archive_timeout_seconds: float = 90.0
+    # Alvo do modelo: chuva acumulada nas próximas `ml_horizon_hours` >= `ml_heavy_rain_mm`
+    ml_horizon_hours: int = 3
+    ml_heavy_rain_mm: float = 10.0
+    ml_min_positive_samples: int = 40
+    # Operação automática
+    ml_auto_bootstrap: bool = True          # coleta + treina em background se não houver modelo
+    ml_sync_interval_minutes: int = 60      # atualiza observações horárias recentes
+    ml_retrain_interval_hours: int = 168    # re-treino periódico (semanal)
 
     model_config = SettingsConfigDict(
         env_file=".env",

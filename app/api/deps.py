@@ -39,7 +39,7 @@ def get_storage_service() -> StorageService:
 
 @lru_cache(maxsize=1)
 def get_ml_prediction_service() -> MLPredictionService:
-    service = MLPredictionService(storage=get_storage_service())
+    service = MLPredictionService(storage=get_storage_service(), session_factory=AsyncSessionLocal)
     loaded = service.try_load()
     if loaded:
         print("[ML] Modelo carregado do disco.")

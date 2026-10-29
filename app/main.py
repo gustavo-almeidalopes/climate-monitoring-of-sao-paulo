@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from app.api.deps import (
     close_singletons,
+    get_ml_prediction_service,
     get_news_repository,
     get_scheduler_service,
     get_storage_service,
@@ -72,9 +74,17 @@ async def lifespan(_: FastAPI):
     scheduler.start()
     scheduler.add_job(_run_news_scrape, interval_minutes=30, job_id="news_scraper")
 
+    # ML com dados reais: observações horárias recentes + re-treino periódico.
+    ml = get_ml_prediction_service()
+    scheduler.add_job(ml.scheduled_sync, interval_minutes=settings.ml_sync_interval_minutes, job_id="ml_sync_recent")
+    scheduler.add_job(ml.scheduled_retrain, interval_minutes=settings.ml_retrain_interval_hours * 60, job_id="ml_retrain")
+    # Não bloqueia o boot: a coleta de anos de histórico + treino roda em background.
+    bootstrap_task = asyncio.create_task(ml.bootstrap())
+
     try:
         yield
     finally:
+        bootstrap_task.cancel()
         scheduler.shutdown()
         await close_singletons()
 

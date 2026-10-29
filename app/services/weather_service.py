@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
@@ -140,17 +140,9 @@ class WeatherService:
                 return cached
             raise
 
-        ml_risk = None
+        ml_result = None
         if self.ml_service is not None:
-            ml_risk = await self.ml_service.predict_risk(
-                session=session,
-                region_code=region.code,
-                rain_mm=current.rain_mm,
-                humidity_percent=current.humidity_percent,
-                temperature_c=current.temperature_c,
-                wind_kmh=current.wind_kmh,
-                observed_at=current.observed_at,
-            )
+            ml_result = await self.ml_service.risk_for_region(session, region.code)
 
         heuristic_risk = calculate_flood_risk(
             rain_mm=current.rain_mm,
@@ -159,7 +151,8 @@ class WeatherService:
             temperature_c=current.temperature_c,
             aqi=current.aqi,
         )
-        risk = ml_risk if ml_risk is not None else heuristic_risk
+        risk = ml_result[0] if ml_result is not None else heuristic_risk
+        ml_forecast_risk = ml_result[1] if ml_result is not None else {}
 
         reading_row = await self.storage.save_current_reading(session, current, risk)
 
@@ -168,16 +161,21 @@ class WeatherService:
                 region,
                 preferred_source=current.source,
             )
-            risk_by_timestamp = {
-                item.forecast_for: calculate_flood_risk(
-                    rain_mm=item.rain_mm,
-                    humidity_percent=item.humidity_percent,
-                    wind_kmh=item.wind_kmh,
-                    temperature_c=item.temperature_c,
-                    aqi=current.aqi,
+            risk_by_timestamp: dict[datetime, int] = {}
+            for item in forecast:
+                hour = self._as_utc(item.forecast_for).replace(minute=0, second=0, microsecond=0)
+                ml_point_risk = ml_forecast_risk.get(hour)
+                risk_by_timestamp[item.forecast_for] = (
+                    ml_point_risk
+                    if ml_point_risk is not None
+                    else calculate_flood_risk(
+                        rain_mm=item.rain_mm,
+                        humidity_percent=item.humidity_percent,
+                        wind_kmh=item.wind_kmh,
+                        temperature_c=item.temperature_c,
+                        aqi=current.aqi,
+                    )
                 )
-                for item in forecast
-            }
             await self.storage.save_forecast_readings(session, region.code, forecast, risk_by_timestamp)
         except ProviderUnavailableError:
             # Mantemos o dado atual salvo mesmo se a previsao falhar nesta rodada.
