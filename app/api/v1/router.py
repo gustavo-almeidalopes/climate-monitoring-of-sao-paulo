@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.ml import router as ml_router
+from app.controllers.ml_controller import router as ml_router
 from app.api.v1.weather import router as weather_router
 
 api_router = APIRouter()

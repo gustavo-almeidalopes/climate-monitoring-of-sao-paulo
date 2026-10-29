@@ -1,8 +1,15 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from app.db.base import Base
 from app.db.session import engine
-from app.models import forecast_reading, news_article, region, weather_reading  # noqa: F401
+from app.models import (  # noqa: F401
+    forecast_reading,
+    hourly_observation,
+    model_run,
+    news_article,
+    region,
+    weather_reading,
+)
 
 
 async def init_db() -> None:

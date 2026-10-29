@@ -1,89 +1,183 @@
+"""Engenharia de features para previsão de chuva forte de curto prazo (nowcasting).
+
+Regra de ouro: a feature na hora `t` usa SOMENTE dados de horas <= t. O alvo usa as horas
+t+1 .. t+H. Assim o modelo aprende a *antecipar* chuva forte a partir de sinais físicos
+(queda de pressão, umidade/ponto de orvalho, nebulosidade, vento, chuva acumulada), em vez de
+reproduzir um limiar sobre a própria chuva já observada.
+"""
+
 from __future__ import annotations
 
-from datetime import datetime
+from typing import TYPE_CHECKING
 
-# Ordem deve ser mantida — usada para treino e inferência.
+if TYPE_CHECKING:
+    import pandas as pd
+
+LOCAL_TZ = "America/Sao_Paulo"
+RAIN_EPS_MM = 0.1
+
+# Ordem fixa — usada no treino e na inferência.
 FEATURE_COLUMNS: list[str] = [
-    "rain_mm",
+    "precip_1h",
+    "precip_lag1",
+    "precip_lag2",
     "rain_3h",
     "rain_6h",
+    "rain_12h",
     "rain_24h",
-    "humidity_percent",
+    "rain_72h",
+    "rain_168h",
+    "max_1h_24h",
+    "hours_since_rain",
     "temperature_c",
-    "wind_kmh",
-    "hour_of_day",
-    "month",
-    "rain_trend_3h",
+    "humidity_percent",
+    "dew_point_c",
+    "dewpoint_depression",
+    "temp_delta_3h",
     "humidity_delta_3h",
+    "dew_point_delta_3h",
+    "pressure_hpa",
+    "pressure_tend_3h",
+    "pressure_tend_6h",
+    "pressure_tend_24h",
+    "cloud_cover_percent",
+    "cloud_delta_3h",
+    "cloud_mean_6h",
+    "wind_kmh",
+    "wind_gust_kmh",
+    "wind_u",
+    "wind_v",
+    "hour_sin",
+    "hour_cos",
+    "doy_sin",
+    "doy_cos",
+]
+
+_CONTINUOUS = [
+    "temperature_c",
+    "humidity_percent",
+    "dew_point_c",
+    "pressure_hpa",
+    "cloud_cover_percent",
+    "wind_kmh",
+    "wind_direction_deg",
+    "wind_gust_kmh",
 ]
 
 
-def build_features_dataframe(df: "pandas.DataFrame") -> "pandas.DataFrame":  # type: ignore[name-defined]
-    """Adiciona colunas de feature a um DataFrame com histórico horário.
+def regularize_hourly(df: "pd.DataFrame") -> "pd.DataFrame":
+    """Reindexa uma série de UMA região para frequência horária contínua (UTC).
 
-    Colunas esperadas: rain_mm, humidity_percent, temperature_c, wind_kmh, recorded_at
-    Retorna DataFrame com as colunas FEATURE_COLUMNS preenchidas.
+    Lacunas curtas (até 3 h) de variáveis contínuas são interpoladas; precipitação ausente
+    permanece NaN (não inventamos chuva).
     """
     import pandas as pd
 
-    df = df.copy().sort_values("recorded_at").reset_index(drop=True)
-    df["recorded_at"] = pd.to_datetime(df["recorded_at"])
+    from app.ml.dataset import OBSERVATION_COLUMNS
 
-    df["rain_3h"] = df["rain_mm"].rolling(3, min_periods=1).sum()
-    df["rain_6h"] = df["rain_mm"].rolling(6, min_periods=1).sum()
-    df["rain_24h"] = df["rain_mm"].rolling(24, min_periods=1).sum()
+    if df.empty:
+        return df.copy()
 
-    df["hour_of_day"] = df["recorded_at"].dt.hour
-    df["month"] = df["recorded_at"].dt.month
+    out = df.copy()
+    out["observed_at"] = pd.to_datetime(out["observed_at"], utc=True)
+    out = out.sort_values("observed_at").drop_duplicates("observed_at", keep="last")
+    out = out.set_index("observed_at")
+    full_index = pd.date_range(out.index.min(), out.index.max(), freq="h", tz="UTC")
+    out = out.reindex(full_index)
+    out.index.name = "observed_at"
 
-    df["rain_trend_3h"] = df["rain_3h"] - df["rain_3h"].shift(3).fillna(0)
-    df["humidity_delta_3h"] = df["humidity_percent"] - df["humidity_percent"].shift(3).fillna(
-        df["humidity_percent"]
-    )
+    for col in OBSERVATION_COLUMNS:
+        if col not in out.columns:
+            out[col] = float("nan")
+        out[col] = pd.to_numeric(out[col], errors="coerce").astype(float)
+    for col in _CONTINUOUS:
+        out[col] = out[col].interpolate(limit=3, limit_area="inside")
 
-    return df
+    return out.reset_index()
 
 
-def make_flood_labels(df: "pandas.DataFrame") -> "pandas.Series":  # type: ignore[name-defined]
-    """Gera labels binárias de risco de alagamento.
+def build_features(df: "pd.DataFrame") -> "pd.DataFrame":
+    """Adiciona as colunas de FEATURE_COLUMNS a uma série horária regularizada de UMA região."""
+    import numpy as np
+    import pandas as pd
 
-    Limiares baseados nos níveis de alerta CEMADEN / Defesa Civil SP:
-      - rain_24h > 50 mm  → alerta laranja/vermelho
-      - rain_3h  > 20 mm  → chuva intensa em 3h
-      - rain_mm  > 15 mm  → pico horário crítico
+    out = df.copy()
+    p = out["precipitation_mm"]
+
+    out["precip_1h"] = p
+    out["precip_lag1"] = p.shift(1)
+    out["precip_lag2"] = p.shift(2)
+    for hours in (3, 6, 12, 24, 72, 168):
+        out[f"rain_{hours}h"] = p.rolling(hours, min_periods=1).sum()
+    out["max_1h_24h"] = p.rolling(24, min_periods=1).max()
+
+    position = pd.Series(np.arange(len(out), dtype=float), index=out.index)
+    last_rain = position.where(p >= RAIN_EPS_MM).ffill()
+    out["hours_since_rain"] = (position - last_rain).fillna(240.0).clip(upper=240.0)
+
+    out["dewpoint_depression"] = out["temperature_c"] - out["dew_point_c"]
+    out["temp_delta_3h"] = out["temperature_c"].diff(3)
+    out["humidity_delta_3h"] = out["humidity_percent"].diff(3)
+    out["dew_point_delta_3h"] = out["dew_point_c"].diff(3)
+
+    out["pressure_tend_3h"] = out["pressure_hpa"].diff(3)
+    out["pressure_tend_6h"] = out["pressure_hpa"].diff(6)
+    out["pressure_tend_24h"] = out["pressure_hpa"].diff(24)
+
+    out["cloud_delta_3h"] = out["cloud_cover_percent"].diff(3)
+    out["cloud_mean_6h"] = out["cloud_cover_percent"].rolling(6, min_periods=1).mean()
+
+    # Direção meteorológica: de onde o vento sopra. Convertemos em componentes u/v.
+    direction = np.deg2rad(out["wind_direction_deg"])
+    speed = out["wind_kmh"]
+    out["wind_u"] = -speed * np.sin(direction)
+    out["wind_v"] = -speed * np.cos(direction)
+
+    local = pd.to_datetime(out["observed_at"], utc=True).dt.tz_convert(LOCAL_TZ)
+    hour = local.dt.hour + local.dt.minute / 60.0
+    doy = local.dt.day_of_year
+    out["hour_sin"] = np.sin(2 * np.pi * hour / 24.0)
+    out["hour_cos"] = np.cos(2 * np.pi * hour / 24.0)
+    out["doy_sin"] = np.sin(2 * np.pi * doy / 365.25)
+    out["doy_cos"] = np.cos(2 * np.pi * doy / 365.25)
+
+    return out
+
+
+def add_targets(df: "pd.DataFrame", horizon_hours: int, heavy_rain_mm: float) -> "pd.DataFrame":
+    """Alvos: chuva acumulada em t+1..t+H (mm) e se ela atinge o limiar de chuva forte.
+
+    Linhas sem as H horas futuras completas recebem NaN e são descartadas no treino.
     """
-    return (
-        (df["rain_24h"] > 50) | (df["rain_3h"] > 20) | (df["rain_mm"] > 15)
-    ).astype(int)
+    out = df.copy()
+    p = out["precipitation_mm"]
+    future_sum = p[::-1].rolling(horizon_hours, min_periods=horizon_hours).sum()[::-1].shift(-1)
+    out["target_rain_mm"] = future_sum
+    out["target_heavy"] = (future_sum >= heavy_rain_mm).astype(float).where(future_sum.notna())
+    return out
 
 
-def extract_feature_vector(
-    *,
-    rain_mm: float,
-    humidity_percent: int | float,
-    temperature_c: float,
-    wind_kmh: float,
-    rain_3h: float = 0.0,
-    rain_6h: float = 0.0,
-    rain_24h: float = 0.0,
-    observed_at: datetime | None = None,
-    rain_trend_3h: float = 0.0,
-    humidity_delta_3h: float = 0.0,
-) -> list[float]:
-    """Monta vetor de features na ordem de FEATURE_COLUMNS para inferência."""
-    from datetime import timezone
+def build_training_frame(
+    raw: "pd.DataFrame", horizon_hours: int, heavy_rain_mm: float
+) -> "pd.DataFrame":
+    """Monta o dataset supervisionado a partir de observações de várias regiões.
 
-    now = observed_at or datetime.now(tz=timezone.utc)
-    return [
-        float(rain_mm),
-        float(rain_3h),
-        float(rain_6h),
-        float(rain_24h),
-        float(humidity_percent),
-        float(temperature_c),
-        float(wind_kmh),
-        float(now.hour),
-        float(now.month),
-        float(rain_trend_3h),
-        float(humidity_delta_3h),
-    ]
+    Features e alvos são calculados dentro de cada região (janelas não cruzam regiões).
+    """
+    import pandas as pd
+
+    frames = []
+    for region_code, region_df in raw.groupby("region_code", sort=True):
+        regular = regularize_hourly(region_df.drop(columns=["region_code"]))
+        if regular.empty:
+            continue
+        feat = add_targets(build_features(regular), horizon_hours, heavy_rain_mm)
+        feat["region_code"] = region_code
+        frames.append(feat)
+
+    if not frames:
+        return pd.DataFrame(columns=[*FEATURE_COLUMNS, "target_rain_mm", "target_heavy"])
+
+    data = pd.concat(frames, ignore_index=True)
+    data = data[data["precipitation_mm"].notna() & data["target_rain_mm"].notna()]
+    return data.sort_values(["observed_at", "region_code"]).reset_index(drop=True)
