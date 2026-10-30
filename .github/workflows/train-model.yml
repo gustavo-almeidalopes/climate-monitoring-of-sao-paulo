@@ -1,0 +1,62 @@
+name: Treinar modelo ML (dados reais)
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Anos de histórico ERA5"
+        default: "3"
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/train-model.yml"]
+  schedule:
+    - cron: "17 6 * * 1"  # semanal, segunda 03:17 em SP
+
+permissions:
+  contents: write
+
+concurrency:
+  group: train-model-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Coletar dados reais e treinar
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./train.db
+          ML_MODEL_PATH: models/flood_risk_model.joblib
+        run: |
+          set -o pipefail
+          python scripts/collect_and_train.py --years "${{ github.event.inputs.years || '3' }}" 2>&1 | tee train.log
+          { echo '```'; cat train.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flood-risk-model
+          path: |
+            models/flood_risk_model.joblib
+            models/flood_risk_model.json
+            train.log
+
+      - name: Versionar modelo treinado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git add -f models/flood_risk_model.joblib models/flood_risk_model.json
+          if git diff --cached --quiet; then echo "Sem mudanças no modelo"; exit 0; fi
+          git commit -m "Modelo ML re-treinado com dados reais ($(jq -r .version models/flood_risk_model.json))"
+          git push

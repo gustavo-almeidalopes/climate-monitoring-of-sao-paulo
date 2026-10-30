@@ -15,6 +15,7 @@ env/
 *.db
 *.sqlite3
 models/*.joblib
+!models/flood_risk_model.joblib
 
 # Brainstorm / tooling scratch
 .superpowers/
