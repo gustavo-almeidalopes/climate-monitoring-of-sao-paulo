@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_weather_service
 from app.core.rain_thresholds import get_danger_color, get_danger_label, get_danger_level, thresholds_dict
+from app.core.risk_levels import thresholds_extra
 from app.db.session import get_db
 from app.services.exceptions import NotFoundError, ProviderUnavailableError
 from app.services.weather_service import WeatherService
@@ -16,6 +17,7 @@ from app.views.weather_views import (
     ForecastResponse,
     HistoryResponse,
     MetricsResponse,
+    OverviewResponse,
     RefreshResponse,
     RegionMetrics,
     RegionOut,
@@ -165,5 +167,26 @@ async def weather_metrics(
 
 @router.get("/thresholds", response_model=ThresholdsResponse)
 async def get_thresholds() -> ThresholdsResponse:
-    """Retorna os limiares de chuva (mm/h) para cada nível de perigo (CEMADEN / Defesa Civil SP)."""
-    return ThresholdsResponse(**thresholds_dict())
+    """Retorna os limiares de chuva (mm/h) para cada nível de perigo (CEMADEN / Defesa Civil SP)
+    e os cortes do índice de risco usados no critério único de nível."""
+    return ThresholdsResponse(**thresholds_dict(), **thresholds_extra())
+
+
+@router.get("/overview", response_model=OverviewResponse)
+async def overview(
+    refresh_if_stale: bool = Query(default=True),
+    max_age_minutes: int = Query(default=20, ge=1, le=360),
+    db: AsyncSession = Depends(get_db),
+    weather_service: WeatherService = Depends(get_weather_service),
+) -> OverviewResponse:
+    """Painel numa chamada: leitura atual com nível unificado, série horária −24 h…+48 h,
+    tendência das últimas 6 h e nowcast do modelo de cada região (aditivo; não substitui
+    /current, /forecast, /history nem /ml/predict)."""
+    if refresh_if_stale:
+        await weather_service.ensure_current_data(db, force_refresh=False, max_age_minutes=max_age_minutes)
+    data = await weather_service.get_overview(db)
+    if not data["regions"]:
+        await weather_service.ensure_current_data(db, force_refresh=True, max_age_minutes=max_age_minutes)
+        data = await weather_service.get_overview(db)
+    data["regions"] = {code: _enrich_weather(region) for code, region in data["regions"].items()}
+    return OverviewResponse(**data)

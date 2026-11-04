@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.rain_thresholds import thresholds_dict
+from app.core.risk_levels import thresholds_extra, trend, unified_level
 from app.models.region import Region
 from app.models.weather_reading import WeatherReading
 from app.services.exceptions import NotFoundError, ProviderUnavailableError
@@ -154,7 +156,8 @@ class WeatherService:
         risk = ml_result[0] if ml_result is not None else heuristic_risk
         ml_forecast_risk = ml_result[1] if ml_result is not None else {}
 
-        reading_row = await self.storage.save_current_reading(session, current, risk)
+        risk_source = "ml" if ml_result is not None else "heuristic"
+        reading_row = await self.storage.save_current_reading(session, current, risk, risk_source)
 
         try:
             forecast = await self._fetch_forecast_with_fallback(
@@ -162,9 +165,11 @@ class WeatherService:
                 preferred_source=current.source,
             )
             risk_by_timestamp: dict[datetime, int] = {}
+            source_by_timestamp: dict[datetime, str] = {}
             for item in forecast:
                 hour = self._as_utc(item.forecast_for).replace(minute=0, second=0, microsecond=0)
                 ml_point_risk = ml_forecast_risk.get(hour)
+                source_by_timestamp[item.forecast_for] = "ml" if ml_point_risk is not None else "heuristic"
                 risk_by_timestamp[item.forecast_for] = (
                     ml_point_risk
                     if ml_point_risk is not None
@@ -176,7 +181,9 @@ class WeatherService:
                         aqi=current.aqi,
                     )
                 )
-            await self.storage.save_forecast_readings(session, region.code, forecast, risk_by_timestamp)
+            await self.storage.save_forecast_readings(
+                session, region.code, forecast, risk_by_timestamp, source_by_timestamp
+            )
         except ProviderUnavailableError:
             # Mantemos o dado atual salvo mesmo se a previsao falhar nesta rodada.
             pass
@@ -307,6 +314,7 @@ class WeatherService:
                 "wind": round(row.wind_kmh, 1),
                 "risk": int(row.flood_risk_index),
                 "source": row.source,
+                **self._level_fields(row.rain_mm, row.flood_risk_index, row.risk_source),
             }
             for row in points
         ]
@@ -338,6 +346,7 @@ class WeatherService:
                 "wind": round(row.wind_kmh, 1),
                 "risk": int(row.flood_risk_index),
                 "source": row.source,
+                **self._level_fields(row.rain_mm, row.flood_risk_index, row.risk_source),
             }
             for row in rows
         ]
@@ -453,6 +462,118 @@ class WeatherService:
                 "pm10": round(reading.pm10, 2) if reading.pm10 is not None else None,
                 "source": reading.source,
                 "recorded_at": self._as_utc(reading.recorded_at),
+                **self._level_fields(reading.rain_mm, reading.flood_risk_index, reading.risk_source),
             }
         )
         return payload
+
+    @staticmethod
+    def _level_fields(rain_mm: float, risk: int, risk_source: str | None) -> dict:
+        unified = unified_level(rain_mm, risk, risk_source)
+        return {
+            "risk_source": risk_source or "unknown",
+            "level": unified["level"],
+            "level_label": unified["label"],
+            "level_reason": unified["reason"],
+        }
+
+    async def get_overview(self, session: AsyncSession) -> dict:
+        """Tudo o que o painel precisa numa chamada: leitura atual, série −24 h…+48 h,
+        tendência das últimas 6 h e nowcast do modelo, por região."""
+        now = datetime.now(tz=timezone.utc)
+        updated_at, current = await self.get_current_all(session)
+        regions = {region.code: region for region in await self.storage.list_regions(session)}
+        out: dict[str, dict] = {}
+        for code, payload in current.items():
+            region = regions.get(code)
+            if region is None:
+                continue
+            history = await self.storage.get_history_by_region(session, code, 1)
+            forecast = await self.storage.get_forecast_by_region(session, code, 48)
+
+            series: list[dict] = []
+            by_hour: dict[datetime, WeatherReading] = {}
+            for row in history:
+                hour = self._as_utc(row.recorded_at).replace(minute=0, second=0, microsecond=0)
+                kept = by_hour.get(hour)
+                if kept is None or row.rain_mm > kept.rain_mm or (
+                    row.rain_mm == kept.rain_mm and row.flood_risk_index > kept.flood_risk_index
+                ):
+                    by_hour[hour] = row
+            for hour in sorted(by_hour):
+                row = by_hour[hour]
+                series.append({
+                    "t": hour, "kind": "observed", "rain": round(row.rain_mm, 2),
+                    "risk": int(row.flood_risk_index),
+                    **self._level_fields(row.rain_mm, row.flood_risk_index, row.risk_source),
+                })
+            for row in forecast:
+                series.append({
+                    "t": self._as_utc(row.forecast_for), "kind": "forecast", "rain": round(row.rain_mm, 2),
+                    "risk": int(row.flood_risk_index),
+                    **self._level_fields(row.rain_mm, row.flood_risk_index, row.risk_source),
+                })
+
+            six_hours_ago = now - timedelta(hours=6)
+            recent = [
+                {"t": self._as_utc(row.recorded_at), "rain": round(row.rain_mm, 2), "risk": int(row.flood_risk_index)}
+                for row in history
+                if self._as_utc(row.recorded_at) >= six_hours_ago
+            ]
+            rain_trend = trend([(p["t"], p["rain"]) for p in recent], min_delta=0.5)
+            risk_trend = trend([(p["t"], p["risk"]) for p in recent], min_delta=3)
+
+            nowcast = None
+            if self.ml_service is not None and self.ml_service.model_available:
+                try:
+                    prediction = await self.ml_service.predict_region(session, code, include_forecast=True)
+                except Exception as exc:  # pragma: no cover - inferência nunca derruba o painel
+                    print(f"[ML] overview: falha na inferência de {code}: {exc}")
+                    prediction = None
+                if prediction is not None:
+                    nowcast = {
+                        "as_of": prediction["as_of"],
+                        "horizon_hours": prediction["horizon_hours"],
+                        "heavy_rain_mm": prediction["heavy_rain_mm"],
+                        "heavy_rain_probability": prediction["heavy_rain_probability"],
+                        "heavy_rain_alert": prediction["heavy_rain_alert"],
+                        "expected_rain_next_mm": prediction["expected_rain_next_mm"],
+                    }
+
+            out[code] = {
+                **payload,
+                "series": series,
+                "recent": recent,
+                "trend": {"rain": rain_trend, "risk": risk_trend},
+                "nowcast": nowcast,
+            }
+
+        return {
+            "generated_at": now,
+            "updated_at": updated_at,
+            "thresholds": {**thresholds_dict(), **thresholds_extra()},
+            "model": self._model_summary(),
+            "regions": out,
+        }
+
+    def _model_summary(self) -> dict:
+        """Versão e qualidade do modelo, para o painel exibir a confiança com honestidade."""
+        if self.ml_service is None or not self.ml_service.model_available:
+            return {"available": False}
+        meta = self.ml_service.model_metadata
+        metrics = meta.get("metrics", {}) or {}
+        baseline = metrics.get("baseline", {}) or {}
+        return {
+            "available": True,
+            "version": meta.get("version"),
+            "trained_at": meta.get("trained_at"),
+            "horizon_hours": meta.get("horizon_hours"),
+            "heavy_rain_mm": meta.get("heavy_rain_mm"),
+            "precision": metrics.get("precision_heavy"),
+            "recall": metrics.get("recall_heavy"),
+            "roc_auc": metrics.get("roc_auc"),
+            "pr_auc": metrics.get("pr_auc"),
+            "brier_skill_vs_climatology": metrics.get("brier_skill_vs_climatology"),
+            "persistence_pr_auc": baseline.get("persistence_pr_auc"),
+            "test_positive_rate": metrics.get("test_positive_rate"),
+        }
