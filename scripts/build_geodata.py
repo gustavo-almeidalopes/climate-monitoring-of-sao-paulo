@@ -35,6 +35,17 @@ import httpx
 
 DISTRICTS_URL = "https://raw.githubusercontent.com/codigourbano/distritos-sp/master/distritos-sp.geojson"
 ELEVATION_URL = "https://api.open-meteo.com/v1/elevation"
+OPENTOPODATA_URL = "https://api.opentopodata.org/v1/srtm30m"
+GEOSAMPA_WFS = "https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/ows"
+CKAN_SEARCH = "https://dados.prefeitura.sp.gov.br/api/3/action/package_search"
+# Camadas do GeoSampa ligadas a alagamento (nomes confirmados no GetCapabilities).
+GEOSAMPA_LAYERS = (
+    "geoportal:risco_ocorrencia_alagamento",
+    "geoportal:risco_ocorrencia_inundacao",
+    "geoportal:mancha_inundacao_25",
+    "geoportal:area_inundavel",
+    "geoportal:risco_hidrologico",
+)
 OVERPASS_URLS = ("https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter")
 H3_RES = 9
 
@@ -59,6 +70,12 @@ PROBES = {
         "https://geosampa.prefeitura.sp.gov.br/geoserver/ows?service=WFS&request=GetCapabilities",
     ],
     "GeoSampa — portal": ["https://geosampa.prefeitura.sp.gov.br/PaginasPublicas/_SBC.aspx"],
+    "Dados abertos da Prefeitura — conjuntos do GeoSampa (licença)": [
+        "https://dados.prefeitura.sp.gov.br/api/3/action/package_search?q=geosampa&rows=8",
+    ],
+    "Dados abertos da Prefeitura — alagamento (licença)": [
+        "https://dados.prefeitura.sp.gov.br/api/3/action/package_search?q=alagamento&rows=8",
+    ],
     "CGE — alagamentos": ["https://www.cgesp.org/v3/alagamentos.jsp"],
     "RainViewer — API": ["https://api.rainviewer.com/public/weather-maps.json"],
     "RainViewer — termos da API": ["https://www.rainviewer.com/api.html"],
@@ -120,7 +137,10 @@ def susceptibility(cells: list[dict]) -> None:
     - terreno baixo: média de (a) quão baixa é a célula na área monitorada e (b) quão abaixo
       está da vizinhança imediata (anel H3 k=2) — fundos de vale acumulam água;
     - proximidade de curso d'água: exp(-d / 300 m).
-    s = 0,5 * terreno_baixo + 0,5 * proximidade. Não usa histórico de ocorrências (sem fonte verificada).
+    - histórico: ocorrências de alagamento registradas pela Prefeitura (GeoSampa,
+      risco_ocorrencia_alagamento) na célula e vizinhas (anel k=1), normalizado por log.
+    Sem histórico: s = 0,5 * terreno_baixo + 0,5 * proximidade.
+    Com histórico: s = 0,35 * terreno_baixo + 0,35 * proximidade + 0,30 * histórico.
     """
     elev = {c["h3"]: c["elev_m"] for c in cells if c["elev_m"] is not None}
     if len(elev) < len(cells) * 0.9:
@@ -133,15 +153,69 @@ def susceptibility(cells: list[dict]) -> None:
         rel.append(c["rel_elev_m"])
     abs_rank = percentile_ranks([c["elev_m"] for c in cells])
     rel_rank = percentile_ranks(rel)
+    max_occ = max((c.get("occurrences") or 0) for c in cells)
     for c, ra, rr in zip(cells, abs_rank, rel_rank):
         low = 1.0 - (ra + rr) / 2.0
-        near = math.exp(-c["dist_stream_m"] / 300.0) if c.get("dist_stream_m") is not None else None
+        near = math.exp(-c["dist_stream_m"] / 300.0) if c.get("dist_stream_m") is not None else 0.0
         c["low_terrain"] = round(low, 3)
-        c["near_stream"] = None if near is None else round(near, 3)
-        c["susc"] = round(0.5 * low + 0.5 * near, 3) if near is not None else round(low, 3)
+        c["near_stream"] = round(near, 3)
+        if max_occ > 0:
+            hist = math.log1p(c.get("occurrences") or 0) / math.log1p(max_occ)
+            c["history"] = round(hist, 3)
+            c["susc"] = round(0.35 * low + 0.35 * near + 0.30 * hist, 3)
+        else:
+            c["susc"] = round(0.5 * low + 0.5 * near, 3)
 
 
 # ---------------------------------------------------------------- fontes
+
+
+def representative_point(geom: dict | None) -> tuple[float, float] | None:
+    """Ponto representativo (lat, lng) de uma geometria GeoJSON: o ponto, ou a média dos vértices."""
+    if not geom:
+        return None
+    coords = geom.get("coordinates")
+    flat: list[list[float]] = []
+
+    def walk(c):
+        if isinstance(c, (list, tuple)) and c and isinstance(c[0], (int, float)):
+            flat.append(c)
+        elif isinstance(c, (list, tuple)):
+            for x in c:
+                walk(x)
+
+    walk(coords)
+    if not flat:
+        return None
+    return sum(p[1] for p in flat) / len(flat), sum(p[0] for p in flat) / len(flat)
+
+
+def geosampa_layer(client: httpx.Client, layer: str, bbox: tuple[float, float, float, float]) -> list[dict]:
+    south, west, north, east = bbox
+    params = {
+        "service": "WFS", "version": "1.0.0", "request": "GetFeature", "typeName": layer,
+        "outputFormat": "application/json", "srsName": "EPSG:4326", "maxFeatures": "20000",
+        "bbox": f"{west},{south},{east},{north},EPSG:4326",
+    }
+    resp = client.get(GEOSAMPA_WFS, params=params, timeout=180)
+    resp.raise_for_status()
+    feats = resp.json().get("features", [])
+    for f in feats:
+        f.pop("id", None)
+        f["geometry"] = round_geometry(f.get("geometry"))
+    return feats
+
+
+def round_geometry(geom: dict | None) -> dict | None:
+    if not geom:
+        return geom
+
+    def rnd(c):
+        if isinstance(c, (list, tuple)) and c and isinstance(c[0], (int, float)):
+            return [round(c[0], 5), round(c[1], 5)]
+        return [rnd(x) for x in c]
+
+    return {"type": geom["type"], "coordinates": rnd(geom["coordinates"])}
 
 
 def get_districts(client: httpx.Client) -> list[dict]:
@@ -171,25 +245,59 @@ def district_cells(districts: list[dict]) -> list[dict]:
     return sorted(cells.values(), key=lambda c: c["h3"])
 
 
-def fetch_elevation(client: httpx.Client, cells: list[dict]) -> str | None:
-    for i in range(0, len(cells), 100):
-        chunk = cells[i:i + 100]
-        params = {"latitude": ",".join(str(c["lat"]) for c in chunk),
-                  "longitude": ",".join(str(c["lng"]) for c in chunk)}
-        for attempt in range(4):
-            try:
-                resp = client.get(ELEVATION_URL, params=params, timeout=60)
-                resp.raise_for_status()
-                for c, e in zip(chunk, resp.json()["elevation"]):
-                    c["elev_m"] = None if e is None else round(float(e), 1)
+def _elevation_open_meteo(client: httpx.Client, chunk: list[dict]) -> list[float | None]:
+    params = {"latitude": ",".join(str(c["lat"]) for c in chunk),
+              "longitude": ",".join(str(c["lng"]) for c in chunk)}
+    resp = client.get(ELEVATION_URL, params=params, timeout=60)
+    resp.raise_for_status()
+    return resp.json()["elevation"]
+
+
+def _elevation_opentopodata(client: httpx.Client, chunk: list[dict]) -> list[float | None]:
+    locations = "|".join(f"{c['lat']},{c['lng']}" for c in chunk)
+    resp = client.get(OPENTOPODATA_URL, params={"locations": locations}, timeout=60)
+    resp.raise_for_status()
+    return [r.get("elevation") for r in resp.json()["results"]]
+
+
+ELEVATION_SOURCES = {
+    "open-meteo": (_elevation_open_meteo, "Copernicus DEM GLO-90 (90 m) via Open-Meteo Elevation API",
+                   "CC BY 4.0 (Open-Meteo); © DLR e.V. 2010-2014 e © Airbus Defence and Space GmbH 2014-2018, "
+                   "fornecido no âmbito do COPERNICUS pela União Europeia e ESA"),
+    "opentopodata": (_elevation_opentopodata, "SRTM GL1 (30 m) via Open Topo Data (api.opentopodata.org)",
+                     "SRTM: domínio público (NASA/USGS); serviço Open Topo Data"),
+}
+
+
+def fetch_elevation(client: httpx.Client, cells: list[dict]) -> tuple[str | None, str | None]:
+    """Tenta cada fonte em ordem, com espaçamento e backoff para respeitar os limites de uso.
+    Devolve (fonte usada, erro)."""
+    errors = []
+    for key, (fetch, _, _) in ELEVATION_SOURCES.items():
+        ok = True
+        for i in range(0, len(cells), 100):
+            chunk = cells[i:i + 100]
+            for attempt in range(6):
+                try:
+                    values = fetch(client, chunk)
+                    for c, e in zip(chunk, values):
+                        c["elev_m"] = None if e is None else round(float(e), 1)
+                    break
+                except Exception as exc:  # noqa: BLE001
+                    if attempt == 5:
+                        errors.append(f"{key}: {exc}")
+                        ok = False
+                    else:
+                        time.sleep(min(90, 10 * 2 ** attempt))
+            if not ok:
                 break
-            except Exception as exc:  # noqa: BLE001
-                if attempt == 3:
-                    return f"falha na altitude: {exc}"
-                time.sleep(2 ** attempt)
-        time.sleep(0.3)
-    log("altitude ok")
-    return None
+            time.sleep(1.5)
+        if ok:
+            log(f"altitude ok ({key})")
+            return key, None
+        for c in cells:
+            c["elev_m"] = None
+    return None, "falha na altitude: " + " | ".join(e[:300] for e in errors)
 
 
 def overpass(client: httpx.Client, query: str) -> dict:
@@ -235,10 +343,22 @@ def probe(client: httpx.Client) -> list[str]:
                 text = resp.text
                 lines.append(f"- `{url}` → HTTP {resp.status_code}, {len(text)} bytes, `{resp.headers.get('content-type', '')}`")
                 if "GetCapabilities" in url and resp.status_code == 200:
+                    for tag in ("Fees", "AccessConstraints", "Title", "Abstract"):
+                        m = re.search(rf"<(?:ows:)?{tag}>([^<]*)</(?:ows:)?{tag}>", text)
+                        if m:
+                            lines.append(f"  - {tag}: “{m.group(1).strip()[:300]}”")
+                    for layer in GEOSAMPA_LAYERS:
+                        m = re.search(rf"<Name>{re.escape(layer)}</Name>\s*<Title>([^<]*)</Title>(?:\s*<Abstract>([^<]*)</Abstract>)?", text)
+                        if m:
+                            lines.append(f"  - `{layer}`: {m.group(1).strip()} — {(m.group(2) or '').strip()[:300]}")
                     names = re.findall(r"<(?:wfs:)?Name>([^<]+)</(?:wfs:)?Name>", text)
                     hits = [n for n in names if PROBE_KEYWORDS.search(n)]
                     lines.append(f"  - {len(names)} camadas; relacionadas a água/risco: "
                                  + (", ".join(f"`{h}`" for h in hits[:80]) or "nenhuma"))
+                elif "package_search" in url and resp.status_code == 200:
+                    for pkg in resp.json().get("result", {}).get("results", [])[:8]:
+                        lines.append(f"  - pacote `{pkg.get('name')}` ({pkg.get('title')}): licença **{pkg.get('license_title')}** "
+                                     f"({pkg.get('license_url') or pkg.get('license_id')})")
                 elif "rainviewer.com/public" in url and resp.status_code == 200:
                     data = resp.json()
                     past = data.get("radar", {}).get("past", [])
@@ -286,15 +406,12 @@ def main() -> int:
             "uso": "apenas para selecionar as células e atribuir distrito/região",
         }
 
-        err = fetch_elevation(client, cells)
+        used, err = fetch_elevation(client, cells)
         if err:
             notes.append(err)
-        meta["sources"]["altitude"] = {
-            "url": ELEVATION_URL,
-            "dataset": "Copernicus DEM GLO-90 (90 m) via Open-Meteo Elevation API",
-            "licenca": "CC BY 4.0 (Open-Meteo); © DLR e.V. 2010-2014 e © Airbus Defence and Space GmbH 2014-2018, "
-                       "fornecido no âmbito do COPERNICUS pela União Europeia e ESA",
-        }
+        if used:
+            _, dataset, licence = ELEVATION_SOURCES[used]
+            meta["sources"]["altitude"] = {"fonte": used, "dataset": dataset, "licenca": licence}
 
         south, west, north, east = bbox_of(cells)
         bbox = f"{south},{west},{north},{east}"
@@ -358,12 +475,40 @@ def main() -> int:
             notes.append(f"pontos de apoio: {exc}")
         meta["sources"]["pontos_de_apoio"] = {"consulta": "Overpass API, amenity=hospital|fire_station", "licenca": osm_license}
 
+        geosampa_dir = out / "geosampa"
+        geosampa_dir.mkdir(exist_ok=True)
+        meta["sources"]["geosampa"] = {"wfs": GEOSAMPA_WFS, "camadas": {}}
+        for layer in GEOSAMPA_LAYERS:
+            try:
+                feats = geosampa_layer(client, layer, (south, west, north, east))
+                name = layer.split(":")[1]
+                write_geojson(geosampa_dir / f"{name}.geojson", feats)
+                meta["sources"]["geosampa"]["camadas"][layer] = len(feats)
+                log(f"GeoSampa {layer}: {len(feats)} feições")
+            except Exception as exc:  # noqa: BLE001
+                notes.append(f"GeoSampa {layer}: {exc}")
+        occurrences = []
+        occ_path = geosampa_dir / "risco_ocorrencia_alagamento.geojson"
+        if occ_path.exists():
+            for f in json.loads(occ_path.read_text(encoding="utf-8"))["features"]:
+                pt = representative_point(f.get("geometry"))
+                if pt:
+                    occurrences.append(pt)
+        if occurrences:
+            counts: dict[str, int] = {}
+            for lat, lng in occurrences:
+                cell = h3.latlng_to_cell(lat, lng, H3_RES)
+                counts[cell] = counts.get(cell, 0) + 1
+            for c in cells:
+                c["occurrences"] = sum(counts.get(n, 0) for n in h3.grid_disk(c["h3"], 1))
+            susceptibility(cells)  # recalcula incluindo o histórico de ocorrências
+
         hex_feats = []
         for c in cells:
             boundary = [[round(lng, 5), round(lat, 5)] for lat, lng in h3.cell_to_boundary(c["h3"])]
             boundary.append(boundary[0])
             props = {k: c.get(k) for k in ("h3", "region", "district", "elev_m", "rel_elev_m", "dist_stream_m",
-                                            "nearest_stream", "low_terrain", "near_stream", "susc")}
+                                            "nearest_stream", "low_terrain", "near_stream", "occurrences", "history", "susc")}
             hex_feats.append({"type": "Feature", "properties": props, "geometry": {"type": "Polygon", "coordinates": [boundary]}})
         write_geojson(out / "hex-zona-norte.geojson", hex_feats)
         meta["counts"]["cells"] = len(hex_feats)
