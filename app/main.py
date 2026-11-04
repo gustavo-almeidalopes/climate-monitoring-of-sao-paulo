@@ -22,6 +22,7 @@ from app.core.config import get_settings
 from app.db.init_db import init_db
 from app.db.session import AsyncSessionLocal
 from app.services.exceptions import ServiceError
+from app.services import ops_service
 from app.services.news_scraper_service import scrape_all_sources
 from app.views.weather_views import ApiInfoResponse
 
@@ -54,6 +55,7 @@ async def lifespan(_: FastAPI):
 
     async with AsyncSessionLocal() as session:
         await storage.seed_regions(session)
+        await ops_service.seed_example_teams(session)
         try:
             await weather.ensure_current_data(
                 session,

@@ -75,3 +75,43 @@ test("@screenshot detalhe tema escuro", async ({ page }, info) => {
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(OUT, `${PREFIX}-detalhe-regiao-escuro-desktop.png`) });
 });
+
+import { mockOps } from "../support/mocks.js";
+
+test("@screenshot fase 3: operação", async ({ page }, info) => {
+    test.skip(PREFIX === "antes", "só existe na versão nova");
+    const mobile = info.project.name === "celular";
+    await page.addInitScript(() => localStorage.setItem("climasp_theme", "light"));
+    await mockNetwork(page, { overview: () => overviewPayload({ ...VALUES, CV: { rain: 6.2, risk: 41, forecast: h => (h === 1 ? 28 : 3) } }, { updatedAt: UPDATED() }) });
+    await mockOps(page);
+    await page.goto("/index.html?operador=1");
+    await expect(page.locator("#mapLoading")).toBeHidden({ timeout: 15_000 });
+    if (mobile) await page.locator("#btnRegions").click();
+    await page.locator("#tabOps").click();
+    await page.locator("#opsToken").fill("op-teste");
+    await page.locator("#opsLoginForm button[type=submit]").click();
+    await expect(page.locator("#opsWho")).toHaveText("Operador");
+    await page.locator("#opsPick").click();
+    const box = await page.locator("#map").boundingBox();
+    await page.mouse.click(box.x + box.width * 0.58, box.y + box.height * 0.55);
+    await expect(page.locator("#opsCandidates .cand")).toHaveCount(3);
+    await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(OUT, `${PREFIX}-despacho-${info.project.name}.png`) });
+
+    if (!mobile) {
+        await page.locator("#opsCoverageToggle").check();
+        await expect(page.locator("#opsCoverageSummary")).toContainText("alcançada");
+        await page.locator("#opsCoverageToggle").scrollIntoViewIfNeeded();
+        await page.waitForTimeout(700);
+        await page.screenshot({ path: path.join(OUT, `${PREFIX}-cobertura-isocronas-desktop.png`) });
+        await page.locator("#opsCoverageToggle").uncheck();
+        await page.locator("#opsDescription").fill("Rua alagada, carro ilhado");
+        await page.locator("#opsCandidates [data-dispatch]").first().click();
+        await expect(page.locator("#opsIncidents .inc-card")).toHaveCount(1);
+        await page.locator("#opsReportRefresh").click();
+        await expect(page.locator("#opsReport")).toContainText("mm");
+        await page.locator("#opsIncidents").scrollIntoViewIfNeeded();
+        await page.waitForTimeout(500);
+        await page.screenshot({ path: path.join(OUT, `${PREFIX}-ocorrencia-e-sugestao-desktop.png`) });
+    }
+});

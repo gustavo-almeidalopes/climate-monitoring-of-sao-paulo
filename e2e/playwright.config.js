@@ -20,6 +20,8 @@ export default defineConfig({
         trace: "retain-on-failure",
     },
     projects: [
+        // No Mac (scripts/ios/test.sh): também roda no WebKit com perfil de iPhone — o motor do Safari.
+        ...(process.env.E2E_WEBKIT === "1" ? [{ name: "iphone-webkit", use: { ...devices["iPhone 15"] } }] : []),
         { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
         {
             name: "celular",

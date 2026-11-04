@@ -200,3 +200,113 @@ export async function mockNetwork(page, opts = {}) {
 
     return state;
 }
+
+/* ------------------------------------------------------------------ Fase 3: operação */
+
+const OPS_TEAMS = [
+    { id: 1, code: "EX-01", name: "[EXEMPLO] Bombeiros 1", kind: "bombeiros", lat: -23.5038, lng: -46.628 },
+    { id: 2, code: "EX-02", name: "[EXEMPLO] Defesa Civil Santana", kind: "defesa_civil", lat: -23.482, lng: -46.615 },
+    { id: 3, code: "EX-03", name: "[EXEMPLO] SAMU 1", kind: "samu", lat: -23.47, lng: -46.66 },
+    { id: 4, code: "EX-04", name: "[EXEMPLO] CET 1", kind: "cet", lat: -23.52, lng: -46.58 },
+    { id: 5, code: "EX-05", name: "[EXEMPLO] Defesa Civil Jaçanã", kind: "defesa_civil", lat: -23.442, lng: -46.585 },
+];
+
+const kmBetween = (a, b) => {
+    const r = Math.PI / 180;
+    const h = Math.sin(((b.lat - a.lat) * r) / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(((b.lng - a.lng) * r) / 2) ** 2;
+    return 6371 * 2 * Math.asin(Math.sqrt(h));
+};
+
+/**
+ * API de operação simulada (estado em memória) + OSRM simulado.
+ * Credenciais: "op-teste" → operador, "gestor-teste" → gestor. `configured: false` → 503.
+ */
+export async function mockOps(page, { configured = true, osrmDown = false } = {}) {
+    const now = () => new Date().toISOString();
+    const db = {
+        teams: OPS_TEAMS.map(t => ({ ...t, status: "disponivel", base_lat: t.lat, base_lng: t.lng, base_name: "base de teste",
+            base_source: "teste", is_example: true, updated_at: now() })),
+        incidents: [],
+        calls: [],
+    };
+    const roleOf = req => {
+        const h = req.headers().authorization || "";
+        return h === "Bearer op-teste" ? "operador" : h === "Bearer gestor-teste" ? "gestor" : null;
+    };
+    await page.route(/\/api\/v1\/ops\//, route => {
+        const req = route.request();
+        const url = new URL(req.url());
+        const path = url.pathname.replace(/^.*\/api\/v1\/ops/, "");
+        db.calls.push(`${req.method()} ${path}`);
+        const json = (body, status = 200) => route.fulfill({ status, body: JSON.stringify(body), contentType: "application/json" });
+        if (!configured) return json({ detail: "Operação não configurada: defina OPERATOR_TOKEN e MANAGER_TOKEN no servidor." }, 503);
+        const role = roleOf(req);
+        if (!role) return json({ detail: "Credencial inválida." }, 401);
+        const body = req.postData() ? JSON.parse(req.postData()) : {};
+        const write = req.method() !== "GET";
+        if (write && role !== "operador") return json({ detail: "Ação restrita ao perfil operador." }, 403);
+        let m;
+        if (path === "/me") return json({ role });
+        if (path === "/teams") return json(db.teams);
+        if ((m = path.match(/^\/teams\/(\d+)$/))) {
+            const t = db.teams.find(x => x.id === Number(m[1]));
+            Object.assign(t, Object.fromEntries(Object.entries(body).filter(([, v]) => v != null)), { updated_at: now() });
+            return json(t);
+        }
+        if (path.startsWith("/incidents") && req.method() === "GET") return json([...db.incidents].reverse());
+        if (path === "/incidents") {
+            const inc = { id: db.incidents.length + 1, kind: body.kind, description: body.description, address: body.address,
+                lat: body.lat, lng: body.lng, region: "ST", status: "aberta", team_id: null, eta_minutes: null, opened_at: now(),
+                assigned_at: null, arrived_at: null, resolved_at: null, is_example: false,
+                timeline: [{ at: now(), kind: "aberta", team_id: null, note: body.description, actor_role: role }] };
+            db.incidents.push(inc);
+            return json(inc, 201);
+        }
+        if ((m = path.match(/^\/incidents\/(\d+)\/(assign|arrive|resolve)$/))) {
+            const inc = db.incidents.find(i => i.id === Number(m[1]));
+            const team = () => db.teams.find(t => t.id === inc.team_id);
+            if (m[2] === "assign") {
+                const t = db.teams.find(x => x.id === body.team_id);
+                if (t.status !== "disponivel") return json({ detail: `${t.name} não está disponível.` }, 409);
+                t.status = "em_deslocamento"; inc.team_id = t.id; inc.status = "despachada"; inc.assigned_at = now(); inc.eta_minutes = body.eta_minutes;
+            } else if (m[2] === "arrive") {
+                team().status = "em_ocorrencia"; inc.status = "no_local"; inc.arrived_at = now();
+            } else {
+                if (team()) team().status = "disponivel";
+                inc.status = "resolvida"; inc.resolved_at = now();
+            }
+            inc.timeline.push({ at: now(), kind: m[2], team_id: inc.team_id, note: "", actor_role: role });
+            return json(inc);
+        }
+        if (path.startsWith("/report")) {
+            return json({ start: now(), end: now(), hours: 24, rain: { ST: { total_mm: 31.5, hours: 24, source: "teste" } },
+                incidents: { total: db.incidents.length, by_status: { resolvida: db.incidents.filter(i => i.status === "resolvida").length },
+                    mean_minutes_to_dispatch: 2.5, mean_minutes_to_arrival: 9.1, mean_minutes_to_resolution: 40.2 },
+                model: { evaluated: 12, true_positive: 1, false_positive: 3, false_negative: 1, true_negative: 7, precision: 0.25, recall: 0.5, note: null } });
+        }
+        return json({ detail: "não encontrado" }, 404);
+    });
+
+    // OSRM: tempo proporcional à distância (30 km/h); a rota mais rápida corta em linha reta,
+    // a alternativa desvia para o norte.
+    await page.route("https://router.project-osrm.org/**", route => {
+        db.calls.push(`OSRM ${new URL(route.request().url()).pathname.split("/")[1]}`);
+        if (osrmDown) return route.fulfill({ status: 503, body: "{}" });
+        const url = new URL(route.request().url());
+        const coords = decodeURIComponent(url.pathname.split("/").pop()).split(";").map(c => { const [lng, lat] = c.split(",").map(Number); return { lat, lng }; });
+        const json = body => route.fulfill({ status: 200, body: JSON.stringify(body), contentType: "application/json" });
+        if (url.pathname.startsWith("/table/")) {
+            const dest = coords[coords.length - 1];
+            return json({ code: "Ok", durations: coords.slice(0, -1).map(s => [(kmBetween(s, dest) / 30) * 3600]) });
+        }
+        const [a, b] = coords;
+        const line = [[a.lng, a.lat], [b.lng, b.lat]];
+        const mid = { lat: Math.max(a.lat, b.lat) + 0.03, lng: (a.lng + b.lng) / 2 };
+        const km = kmBetween(a, b);
+        return json({ code: "Ok", routes: [
+            { duration: (km / 30) * 3600, distance: km * 1000, geometry: { coordinates: line } },
+            { duration: (km / 24) * 3600, distance: km * 1300, geometry: { coordinates: [[a.lng, a.lat], [mid.lng, mid.lat], [b.lng, b.lat]] } },
+        ] });
+    });
+    return db;
+}

@@ -9,6 +9,7 @@ from app.models import (  # noqa: F401
     hourly_observation,
     model_run,
     news_article,
+    ops,
     region,
     weather_reading,
 )

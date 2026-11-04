@@ -52,6 +52,14 @@ class Settings(BaseSettings):
     ml_sync_interval_minutes: int = 60      # atualiza observações horárias recentes
     ml_retrain_interval_hours: int = 168    # re-treino periódico (semanal)
 
+    # Operação (Fase 3) — perfis por token. Sem tokens, as rotas /ops respondem 503.
+    operator_token: str | None = None
+    manager_token: str | None = None
+    ops_seed_examples: bool = True          # equipes de EXEMPLO (fictícias) enquanto não há integração real
+    geo_data_dir: str = "data/geo"
+    # Desenvolvimento: recebe erros do navegador (ex.: Safari no Simulador iOS) em logs/client.log
+    dev_client_log: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

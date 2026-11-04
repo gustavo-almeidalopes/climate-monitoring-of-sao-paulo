@@ -46,7 +46,9 @@ GEOSAMPA_LAYERS = (
     # (arquivo truncado e >10 MB); precisa de simplificação antes de ser exibida.
     "geoportal:area_inundavel",
     "geoportal:risco_hidrologico",
+    "geoportal:reservatorio_amortecimento",  # piscinões (pontos de apoio de drenagem)
 )
+OSRM_TABLE = "https://router.project-osrm.org/table/v1/driving/"
 OVERPASS_URLS = ("https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter")
 H3_RES = 9
 
@@ -217,6 +219,34 @@ def round_geometry(geom: dict | None) -> dict | None:
         return [rnd(x) for x in c]
 
     return {"type": geom["type"], "coordinates": rnd(geom["coordinates"])}
+
+
+def coverage(client: httpx.Client, cells: list[dict], bases: list[dict]) -> dict:
+    """Minutos de carro de cada base até o centro de cada célula (OSRM, sem trânsito).
+
+    Usa o servidor público do OSRM respeitando a política de uso (1 requisição/s).
+    """
+    minutes: list[list[float | None]] = []
+    for b in bases:
+        row: list[float | None] = []
+        for i in range(0, len(cells), 90):
+            chunk = cells[i:i + 90]
+            coords = ";".join([f"{b['lng']},{b['lat']}"] + [f"{c['lng']},{c['lat']}" for c in chunk])
+            for attempt in range(5):
+                try:
+                    resp = client.get(OSRM_TABLE + coords, params={"sources": "0", "annotations": "duration"}, timeout=60)
+                    resp.raise_for_status()
+                    durations = resp.json()["durations"][0][1:]
+                    row.extend(None if d is None else round(d / 60, 1) for d in durations)
+                    break
+                except Exception:  # noqa: BLE001
+                    if attempt == 4:
+                        raise
+                    time.sleep(5 * (attempt + 1))
+            time.sleep(1.1)
+        minutes.append(row)
+        log(f"cobertura: {b['name'][:40]} ok")
+    return {"bases": [b["key"] for b in bases], "cells": [c["h3"] for c in cells], "minutes": minutes}
 
 
 def get_districts(client: httpx.Client) -> list[dict]:
@@ -503,6 +533,21 @@ def main() -> int:
             for c in cells:
                 c["occurrences"] = sum(counts.get(n, 0) for n in h3.grid_disk(c["h3"], 1))
             susceptibility(cells)  # recalcula incluindo o histórico de ocorrências
+
+        bases_path = out / "example-bases.json"
+        if bases_path.exists():
+            try:
+                bases = json.loads(bases_path.read_text(encoding="utf-8"))["bases"]
+                cov = coverage(client, cells, bases)
+                (out / "coverage.json").write_text(json.dumps(cov, separators=(",", ":")), encoding="utf-8")
+                meta["counts"]["coverage_bases"] = len(bases)
+                meta["sources"]["cobertura"] = {
+                    "servico": "OSRM (router.project-osrm.org), perfil carro, sem trânsito",
+                    "licenca": "rotas sobre dados © colaboradores do OpenStreetMap (ODbL); serviço público de demonstração",
+                    "bases": "data/geo/example-bases.json — bases das equipes de EXEMPLO",
+                }
+            except Exception as exc:  # noqa: BLE001
+                notes.append(f"cobertura (OSRM): {exc}")
 
         hex_feats = []
         for c in cells:

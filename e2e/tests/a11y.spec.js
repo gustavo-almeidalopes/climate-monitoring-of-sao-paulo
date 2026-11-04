@@ -52,3 +52,26 @@ for (const theme of ["light", "dark"]) {
         expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
     });
 }
+
+import { mockOps } from "../support/mocks.js";
+
+for (const theme of ["light", "dark"]) {
+    test(`axe sem violações sérias · painel de operação com despacho · tema ${theme}`, async ({ page }, info) => {
+        await page.addInitScript(t => localStorage.setItem("climasp_theme", t), theme);
+        await mockNetwork(page, { overview: () => overviewPayload({ ST: { rain: 3, risk: 20, forecast: h => (h === 1 ? 30 : 2) } }) });
+        await mockOps(page);
+        await page.goto("/index.html?operador=1");
+        await expect(page.locator("#mapLoading")).toBeHidden({ timeout: 15_000 });
+        if (info.project.name === "celular") await page.locator("#btnRegions").click();
+        await page.locator("#tabOps").click();
+        await page.locator("#opsToken").fill("op-teste");
+        await page.locator("#opsLoginForm button[type=submit]").click();
+        await expect(page.locator("#opsWho")).toHaveText("Operador");
+        await page.locator("#opsReportRefresh").click();
+        await expect(page.locator("#opsReport")).toContainText("mm");
+        const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).exclude(".leaflet-tile-pane").analyze();
+        const serious = results.violations.filter(v => v.impact === "serious" || v.impact === "critical")
+            .map(v => ({ id: v.id, nodes: v.nodes.slice(0, 5).map(n => `${n.target.join(" ")} — ${n.failureSummary?.split("\n")[1] || ""}`) }));
+        expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+    });
+}

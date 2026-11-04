@@ -41,6 +41,18 @@ export const store = createStore({
     alertHistory: [],
     alertSeenAt: 0,
 
+    /** Aba do painel lateral: "regions" | "ops". */
+    sideTab: "regions",
+    /** Operação (Fase 3): perfil logado ("operador" | "gestor" | null) e dados carregados. */
+    opsRole: null,
+    opsTeams: [],
+    opsIncidents: [],
+    opsReport: null,
+    opsError: null,
+    /** Ponto escolhido para despacho e as equipes mais rápidas calculadas para ele. */
+    opsTarget: null,
+    opsCandidates: null,
+
     /** Relógio para textos relativos ("há 3 min"), atualizado periodicamente. */
     now: Date.now(),
 });

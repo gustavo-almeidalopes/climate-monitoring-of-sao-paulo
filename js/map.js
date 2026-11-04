@@ -11,7 +11,7 @@
  */
 import { regionAtOffset } from "./insights.js";
 import { regionPopup } from "./popup.js";
-import { DISTRICT_TO_REGION, REGION_META } from "./regions.js";
+import { DISTRICT_TO_REGION, REGION_META, districtLabel } from "./regions.js";
 import { setFocusHandler, selectRegion } from "./regionlist.js";
 import { LEVELS, SAMPLE_COLOR, levelOf } from "./risk.js";
 import { effectiveThresholds, store } from "./state.js";
@@ -66,7 +66,9 @@ function identifyDistrict(props) {
     return null;
 }
 
-const titleCase = s => s.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+const bucketKey = (lat, lng) => `${Math.floor(lat / 0.01)}:${Math.floor(lng / 0.01)}`;
+
+const titleCase = s => districtLabel(s);
 
 /**
  * Nível da célula hexagonal: o nível da região sobe UM degrau quando a célula está entre as
@@ -144,6 +146,9 @@ export function initMap() {
     const outlines = [];      // { id, layer }
     const hexCells = [];      // { props, layer }
     let suscCut = 0.66;       // recalculado: percentil 90 da suscetibilidade da grade
+    const cellLevelNow = new Map(); // h3 → nível da célula AGORA (para rotas que evitam zona crítica)
+    const cellIndex = [];           // { h3, lat, lng, region, district, susc, nearest_stream, dist_stream_m }
+    const cellBuckets = new Map();  // grade grosseira para achar a célula de um ponto
     const labels = {};
     let districtFeatures = null;
     const regionBounds = {};
@@ -236,6 +241,7 @@ export function initMap() {
             layer.setStyle(zoneStyle(d, { sample, opacity }));
             setClasses(layer, `hex ${sample ? "zone-sample" : `lvl-${d.level} ${kindClass(r)}`} ${!sample && r.kind !== "forecast" && d.level === "critical" ? "z-pulse" : ""}`);
             layer._climasp = { region: r, danger: d, thresholds };
+            if (!offset) cellLevelNow.set(props.h3, sample ? "low" : d.level);
         }
 
         for (const [id, marker] of Object.entries(labels)) {
@@ -300,6 +306,16 @@ export function initMap() {
                 style: { stroke: false },
                 onEachFeature: (f, layer) => {
                     hexCells.push({ props: f.properties, layer });
+                    const ring = f.geometry.coordinates[0];
+                    const cell = {
+                        ...f.properties,
+                        lat: ring.reduce((s, c) => s + c[1], 0) / ring.length,
+                        lng: ring.reduce((s, c) => s + c[0], 0) / ring.length,
+                    };
+                    cellIndex.push(cell);
+                    const key = bucketKey(cell.lat, cell.lng);
+                    if (!cellBuckets.has(key)) cellBuckets.set(key, []);
+                    cellBuckets.get(key).push(cell);
                     layer.bindPopup(() => {
                         const info = layer._climasp;
                         const state = store.get();
@@ -373,5 +389,25 @@ export function initMap() {
         return { inside: nearest.distanceKm <= 4, exact: false, ...nearest };
     }
 
-    return { map, locate, focusRegion };
+    /** Célula H3 mais próxima do ponto (até ~250 m), ou null fora da grade. */
+    function cellAt(lat, lng) {
+        let best = null;
+        const [bi, bj] = bucketKey(lat, lng).split(":").map(Number);
+        for (let di = -1; di <= 1; di++) {
+            for (let dj = -1; dj <= 1; dj++) {
+                for (const c of cellBuckets.get(`${bi + di}:${bj + dj}`) || []) {
+                    const d = haversineKm(lat, lng, c.lat, c.lng);
+                    if (d <= 0.25 && (!best || d < best.d)) best = { d, c };
+                }
+            }
+        }
+        return best ? best.c : null;
+    }
+
+    return {
+        map, locate, focusRegion, cellAt,
+        cells: () => cellIndex,
+        cellLevel: h3 => cellLevelNow.get(h3) || null,
+        isCritical: (lat, lng) => { const c = cellAt(lat, lng); return !!c && cellLevelNow.get(c.h3) === "critical"; },
+    };
 }

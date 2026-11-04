@@ -1,0 +1,194 @@
+{
+ "note": "Bases das equipes de EXEMPLO (fictícias). Gerado de app.services.ops_service.example_teams().",
+ "bases": [
+  {
+   "key": "-23.46012,-46.64295",
+   "lat": -23.46012,
+   "lng": -46.64295,
+   "name": "Posto de Bombeiros Horto Florestal - 2º Grupamento de Incêndio",
+   "kinds": [
+    "bombeiros"
+   ]
+  },
+  {
+   "key": "-23.52715,-46.59341",
+   "lat": -23.52715,
+   "lng": -46.59341,
+   "name": "Centro de Suprimentos e Manutenção do Material Operacional de Bombeiros CSM/MOpB",
+   "kinds": [
+    "bombeiros"
+   ]
+  },
+  {
+   "key": "-23.47567,-46.67623",
+   "lat": -23.47567,
+   "lng": -46.67623,
+   "name": "Corpo de Bombeiros - Posto Almanara",
+   "kinds": [
+    "bombeiros"
+   ]
+  },
+  {
+   "key": "-23.51264,-46.66574",
+   "lat": -23.51264,
+   "lng": -46.66574,
+   "name": "2º Grupamento de Bombeiros",
+   "kinds": [
+    "bombeiros"
+   ]
+  },
+  {
+   "key": "-23.50382,-46.62797",
+   "lat": -23.50382,
+   "lng": -46.62797,
+   "name": "2º PB SANTANA",
+   "kinds": [
+    "bombeiros"
+   ]
+  },
+  {
+   "key": "-23.47512,-46.61326",
+   "lat": -23.47512,
+   "lng": -46.61326,
+   "name": "Quartel de bombeiros (sem nome no OSM)",
+   "kinds": [
+    "bombeiros"
+   ]
+  },
+  {
+   "key": "-23.50134,-46.58476",
+   "lat": -23.50134,
+   "lng": -46.58476,
+   "name": "Segundo Grupamento de Bombeiros",
+   "kinds": [
+    "bombeiros"
+   ]
+  },
+  {
+   "key": "-23.46896,-46.61693",
+   "lat": -23.46896,
+   "lng": -46.61693,
+   "name": "Hospital Policia Militar",
+   "kinds": [
+    "samu"
+   ]
+  },
+  {
+   "key": "-23.50630,-46.66138",
+   "lat": -23.5063,
+   "lng": -46.66138,
+   "name": "Hospital Casa Verde",
+   "kinds": [
+    "samu"
+   ]
+  },
+  {
+   "key": "-23.50927,-46.61899",
+   "lat": -23.50927,
+   "lng": -46.61899,
+   "name": "Centro Hospitalar do Sistema Penitenciário CHSP/CASH",
+   "kinds": [
+    "samu"
+   ]
+  },
+  {
+   "key": "-23.47646,-46.61060",
+   "lat": -23.47646,
+   "lng": -46.6106,
+   "name": "Hospital Presidente",
+   "kinds": [
+    "samu"
+   ]
+  },
+  {
+   "key": "-23.48700,-46.66000",
+   "lat": -23.487,
+   "lng": -46.66,
+   "name": "centro aproximado da Subprefeitura Casa Verde/Cachoeirinha",
+   "kinds": [
+    "defesa_civil"
+   ]
+  },
+  {
+   "key": "-23.49300,-46.65800",
+   "lat": -23.493,
+   "lng": -46.658,
+   "name": "centro aproximado da Subprefeitura Casa Verde/Cachoeirinha",
+   "kinds": [
+    "subprefeitura"
+   ]
+  },
+  {
+   "key": "-23.48200,-46.61500",
+   "lat": -23.482,
+   "lng": -46.615,
+   "name": "centro aproximado da Subprefeitura Santana/Tucuruvi",
+   "kinds": [
+    "defesa_civil"
+   ]
+  },
+  {
+   "key": "-23.48800,-46.61300",
+   "lat": -23.488,
+   "lng": -46.613,
+   "name": "centro aproximado da Subprefeitura Santana/Tucuruvi",
+   "kinds": [
+    "subprefeitura"
+   ]
+  },
+  {
+   "key": "-23.44200,-46.58500",
+   "lat": -23.442,
+   "lng": -46.585,
+   "name": "centro aproximado da Subprefeitura Jacana/Tremembe",
+   "kinds": [
+    "defesa_civil"
+   ]
+  },
+  {
+   "key": "-23.44800,-46.58300",
+   "lat": -23.448,
+   "lng": -46.583,
+   "name": "centro aproximado da Subprefeitura Jacana/Tremembe",
+   "kinds": [
+    "subprefeitura"
+   ]
+  },
+  {
+   "key": "-23.50700,-46.58500",
+   "lat": -23.507,
+   "lng": -46.585,
+   "name": "centro aproximado da Subprefeitura Vila Maria/Guilherme",
+   "kinds": [
+    "defesa_civil"
+   ]
+  },
+  {
+   "key": "-23.51300,-46.58300",
+   "lat": -23.513,
+   "lng": -46.583,
+   "name": "centro aproximado da Subprefeitura Vila Maria/Guilherme",
+   "kinds": [
+    "subprefeitura"
+   ]
+  },
+  {
+   "key": "-23.49100,-46.61900",
+   "lat": -23.491,
+   "lng": -46.619,
+   "name": "ponto fictício em Santana",
+   "kinds": [
+    "cet"
+   ]
+  },
+  {
+   "key": "-23.51600,-46.58900",
+   "lat": -23.516,
+   "lng": -46.589,
+   "name": "ponto fictício em Vila Maria",
+   "kinds": [
+    "cet"
+   ]
+  }
+ ]
+}
