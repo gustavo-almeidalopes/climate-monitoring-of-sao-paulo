@@ -1,0 +1,9 @@
+# Só o front-end estático vai para a Vercel; backend, testes e ferramentas ficam de fora.
+app/
+models/
+scripts/
+tests/
+e2e/
+docs/
+*.py
+requirements*.txt
