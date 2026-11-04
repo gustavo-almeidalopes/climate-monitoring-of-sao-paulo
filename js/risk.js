@@ -11,10 +11,10 @@
  */
 
 export const LEVELS = {
-    low: { level: "low", rank: 0, label: "Baixo", symbol: "✓", color: "#2F8A4C" },
-    medium: { level: "medium", rank: 1, label: "Médio", symbol: "→", color: "#CFA22A" },
-    high: { level: "high", rank: 2, label: "Alto", symbol: "▲", color: "#E8590C" },
-    critical: { level: "critical", rank: 3, label: "Crítico", symbol: "⚠", color: "#BE1554" },
+    low: { level: "low", rank: 0, label: "Baixo", color: "#2F8A4C" },
+    medium: { level: "medium", rank: 1, label: "Médio", color: "#CFA22A" },
+    high: { level: "high", rank: 2, label: "Alto", color: "#E8590C" },
+    critical: { level: "critical", rank: 3, label: "Crítico", color: "#BE1554" },
 };
 const ORDER = ["low", "medium", "high", "critical"];
 

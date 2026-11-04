@@ -4,6 +4,7 @@
  * Regra de honestidade: dado de exemplo nunca aparece com cara de dado real —
  * banner explícito, valores acinzentados com a etiqueta "exemplo" e nenhum alerta.
  */
+import { icon } from "./icons.js";
 import { agoText, buildVerdict } from "./insights.js";
 import { effectiveThresholds, store } from "./state.js";
 import { loadWeather } from "./weather.js";
@@ -47,13 +48,16 @@ function renderBanner([connection, source, updatedAt, now]) {
 
 let lastVerdictTitle = "";
 
+/** Ícone do veredito por tom (SVG do sprite; a cor vem do nível). */
+const VERDICT_ICONS = { sample: "wifi-off", calm: "check", watch: "cloud-rain", danger: "alert-triangle" };
+
 function renderVerdict() {
     const state = store.get();
     const thresholds = effectiveThresholds(state);
     const v = buildVerdict(state, thresholds);
     const box = $("#verdict");
     box.className = `verdict tone-${v.tone} ${v.level ? `lvl-${v.level.level}` : ""}`;
-    $("#verdictSym").textContent = v.tone === "sample" ? "?" : v.level ? v.level.symbol : "…";
+    $("#verdictSym").innerHTML = icon(v.level || v.tone === "sample" ? VERDICT_ICONS[v.tone] : "cloud");
     $("#verdictTitle").textContent = v.title;
     $("#verdictDetail").innerHTML = v.detail.map(d => `<span>${escapeHtml(d)}</span>`).join("");
     const changed = Object.values(state.changes || {}).some(c => c.level);

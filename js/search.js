@@ -165,7 +165,7 @@ export function initSearch({ map, locate }) {
         hideToast();
         btn.disabled = true;
         btn.setAttribute("aria-busy", "true");
-        btn.textContent = "…";
+        btn.classList.add("busy");
         try {
             const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=" +
                 encodeURIComponent(`${q}, São Paulo, Brasil`);
@@ -183,7 +183,7 @@ export function initSearch({ map, locate }) {
             console.warn("Falha na busca:", err);
             showToast("Erro de conexão com o serviço de endereços (Nominatim).");
         } finally {
-            btn.textContent = "IR";
+            btn.classList.remove("busy");
             btn.removeAttribute("aria-busy");
             btn.disabled = false;
         }

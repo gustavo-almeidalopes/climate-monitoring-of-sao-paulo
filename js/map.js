@@ -247,7 +247,7 @@ export function initMap() {
             const d = levelOf(r, thresholds);
             inner.innerHTML = sample
                 ? `${escapeHtml(r.short)} · exemplo`
-                : `<span class="sym lvl-${d.level}" aria-hidden="true">${d.symbol}</span>${escapeHtml(r.short)} · ${fmt1(r.rain)} mm/h${r.kind === "forecast" ? " <em>prev.</em>" : ""}`;
+                : `<span class="lvl-dot lvl-${d.level}" aria-hidden="true"></span>${escapeHtml(r.short)} · ${fmt1(r.rain)} mm/h${r.kind === "forecast" ? " <em>prev.</em>" : ""}`;
             el.classList.toggle("is-sample", sample);
             el.classList.toggle("is-forecast", r.kind === "forecast");
         }

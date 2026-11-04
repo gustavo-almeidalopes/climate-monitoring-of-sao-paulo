@@ -56,13 +56,13 @@ export function initUi() {
     setCollapsed(!window.matchMedia("(min-width: 1600px)").matches);
     toggle.addEventListener("click", () => setCollapsed(!panel.classList.contains("collapsed")));
 
-    // Legenda: recolhível; começa fechada no celular para não cobrir o mapa.
+    // Legenda: recolhível; começa fechada (uma pílula com a escala de cores) exceto em telas muito largas.
     const legend = $("#floodLegend");
     const legToggle = $("#legToggle");
     const setLegend = open => {
         legend.classList.toggle("collapsed", !open);
         legToggle.setAttribute("aria-expanded", String(open));
     };
-    setLegend(!window.matchMedia("(max-width: 768px)").matches);
+    setLegend(window.matchMedia("(min-width: 1600px)").matches);
     legToggle.addEventListener("click", () => setLegend(legend.classList.contains("collapsed")));
 }

@@ -35,26 +35,26 @@ export function durationText(ms, now = Date.now()) {
 }
 
 /**
- * Tendência da chuva para exibição: { symbol, word, text, direction }.
+ * Tendência da chuva para exibição: { word, text, direction }.
  * Usa a tendência calculada no servidor (últimas 6 h); sem ela, compara com a leitura anterior.
  */
 export function trendInfo(region, now = Date.now()) {
     const t = region.trend && region.trend.rain;
     if (t && t.direction === "up") {
-        return { direction: "up", symbol: "▲", word: "subindo",
+        return { direction: "up", word: "subindo",
             text: `subindo${t.since ? ` há ${durationText(t.since, now)}` : ""} (+${fmt1(Math.abs(t.delta))} mm/h)` };
     }
     if (t && t.direction === "down") {
-        return { direction: "down", symbol: "▼", word: "caindo",
+        return { direction: "down", word: "caindo",
             text: `caindo${t.since ? ` há ${durationText(t.since, now)}` : ""} (−${fmt1(Math.abs(t.delta))} mm/h)` };
     }
     if (!t && typeof region.prevRain === "number" && typeof region.rain === "number" && region.rain !== region.prevRain) {
         const up = region.rain > region.prevRain;
-        return { direction: up ? "up" : "down", symbol: up ? "▲" : "▼", word: up ? "subindo" : "caindo",
+        return { direction: up ? "up" : "down", word: up ? "subindo" : "caindo",
             text: `${up ? "subindo" : "caindo"} desde a leitura anterior` };
     }
-    if (!t && region.prevRain === undefined) return { direction: "unknown", symbol: "•", word: "", text: "sem histórico recente" };
-    return { direction: "flat", symbol: "→", word: "estável", text: "estável nas últimas horas" };
+    if (!t && region.prevRain === undefined) return { direction: "unknown", word: "", text: "sem histórico recente" };
+    return { direction: "flat", word: "estável", text: "estável nas últimas horas" };
 }
 
 /** Primeira hora prevista nas próximas `hours` com nível ≥ Alto: { hoursAhead, danger, point } ou null. */
