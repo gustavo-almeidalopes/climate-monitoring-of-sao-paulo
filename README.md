@@ -13,6 +13,8 @@ Backend em FastAPI para monitoramento climatico de regioes de Sao Paulo.
 - `GET /api/v1/weather/history/{id}` - Historico com estatisticas (ate 7 dias)
 - `POST /api/v1/weather/refresh` - Atualiza todas as regioes (forcado ou apenas stale)
 - `GET /api/v1/weather/metrics` - Indicadores operacionais de frescor por regiao
+- `GET /api/v1/weather/overview` - Painel numa chamada: leitura atual com nivel unificado, serie horaria -24 h...+48 h, tendencia de 6 h e nowcast do modelo por regiao (aditivo)
+- `GET /api/v1/weather/thresholds` - Limiares de chuva (5/20/40 mm/h) e cortes do indice de risco (25/50/75)
 - `GET /api/v1/ml/status` - Versao do modelo, metricas vs. baselines, importancia das features, job de treino
 - `GET /api/v1/ml/predict/{id}` - Nowcast: probabilidade de chuva forte nas proximas horas, chuva esperada e risco 0-100 (observado + previsao)
 - `GET /api/v1/ml/dataset` - Cobertura da serie horaria real armazenada (por regiao e fonte)
@@ -30,10 +32,16 @@ módulos ES nativos em `js/`. É o mesmo conjunto publicado na Vercel e servido 
 | `js/store.js` | Store central com assinantes (`subscribe(seletor, callback)`) |
 | `js/state.js` | Estado global: conexão, origem dos dados (real/exemplo), regiões, limiares, alertas |
 | `js/weather.js` | Busca `/weather/thresholds` e `/weather/current`, atualização automática a cada 5 min |
-| `js/risk.js` | Critério único de nível de perigo (mapa, cartões, popups, busca e alertas) |
-| `js/map.js` | Leaflet: mapa base que segue o tema, distritos, zonas, popups |
+| `js/risk.js` | Critério único de nível de perigo (espelha `app/core/risk_levels.py`) |
+| `js/insights.js` | Veredito, tendência, idade do dado, previsão e empate entre regiões |
+| `js/status.js` | Indicador de conexão, banner de modo offline, veredito e números de apoio |
+| `js/regionlist.js` | Lista de regiões por nível e painel de detalhe ("Próximas 3 h", gráficos) |
+| `js/charts.js` | Gráficos em SVG (mini-gráfico, chuva por hora, linha de risco) + tabela |
+| `js/map.js` | Leaflet: mapa base por tema, distritos e grade hexagonal pintados pelo nível, rótulos |
+| `js/timeline.js` | Linha do tempo −24 h…+48 h com animação |
+| `js/layers.js` / `js/cluster.js` | Camadas de dados reais e agrupamento de marcadores |
+| `js/geolocate.js` | Botão "minha localização" |
 | `js/alerts.js` | Faixa de alerta com memória por nível e histórico (sino) |
-| `js/status.js` | Indicador de conexão, banner de modo offline e cartões de resumo |
 | `js/search.js` | Busca (Nominatim) com o nível de perigo da subprefeitura do ponto |
 | `js/news.js` | Gaveta de notícias |
 | `js/operator.js` | Modo operador (limiares locais) |
@@ -44,6 +52,15 @@ manuais entre módulos.
 **URL do backend** — edite `config.js` (`window.CLIMASP_API_BASE = "https://seu-backend"`). Vazio =
 `http://localhost:8000` em desenvolvimento e a própria origem nos demais casos. Na Vercel o site é só
 estático: sem essa URL o painel mostra o banner "Sem conexão — dados de exemplo".
+
+**Critério único de nível** — o nível de perigo é o pior entre a chuva observada na última hora
+(limiares CEMADEN/Defesa Civil 5/20/40 mm/h) e o índice de risco 0–100 nos cortes 25/50/75, este só
+quando calculado pelo modelo (`risk_source = "ml"`). O índice heurístico (servidor sem modelo) não
+sobe o nível. Mapa, lista, popups, alertas e veredito usam a mesma regra.
+
+**"Próximas 3 h"** — mostra a chuva prevista hora a hora (Open-Meteo) e a probabilidade de chuva
+forte do modelo, sempre acompanhada da qualidade medida do modelo (precisão e detecção no período
+de teste). Hoje o modelo ainda não supera a climatologia; o painel diz isso explicitamente.
 
 **Modo offline** — sem servidor, o painel exibe valores de exemplo acinzentados, marcados como
 "exemplo", com banner explícito e sem alertas. Se a conexão cai depois de uma leitura real, mantém a
@@ -73,8 +90,31 @@ npx playwright test --grep-invert @screenshot
 SHOT_PREFIX=depois npx playwright test --grep @screenshot   # capturas em docs/screenshots/fase-0/
 ```
 
+### Camadas geográficas (Fase 2)
+
+Geradas por `scripts/build_geodata.py` no workflow **Dados geográficos** (GitHub Actions, que tem
+acesso às fontes) e versionadas em `data/geo/`, com a procedência em `data/geo/metadata.json` e o
+relatório de sondagem/licenças em `docs/fase-2/fontes.md`. Para regenerar, rode o workflow
+manualmente (ou altere o script).
+
+| Camada | Fonte | Licença |
+|---|---|---|
+| Grade hexagonal H3 (res. 9) dos 11 distritos | limites: GeoSampa via codigourbano/distritos-sp | — |
+| Altitude por célula | Copernicus DEM GLO-90 via Open-Meteo | CC BY 4.0 |
+| Cursos d'água, vias, hospitais e bombeiros | OpenStreetMap (Overpass) | ODbL 1.0 |
+| Ocorrências de alagamento/inundação, área inundável (PDMAT3), risco hidrológico | GeoSampa WFS (Prefeitura de SP) | WFS sem restrição de acesso; conjuntos do GeoSampa publicados em CC0 no portal de dados abertos |
+| Radar de chuva (no navegador) | RainViewer | uso gratuito com atribuição obrigatória |
+
+**Suscetibilidade por célula (experimental)**: terreno baixo (absoluto e relativo à vizinhança),
+proximidade de curso d'água e histórico de ocorrências do GeoSampa. As 10% células mais suscetíveis
+sobem um nível quando a região já está em Médio ou acima; nunca descem.
+
+As "vias alagáveis" (Marginal Tietê, Av. Braz Leme) são os exemplos citados no roadmap; a geometria
+vem do OSM, mas a classificação ainda precisa ser confirmada com o histórico do CGE.
+
 Créditos: ícones no estilo [Feather Icons](https://feathericons.com) (MIT); mapas base © OpenStreetMap,
-© CARTO e © Esri; limites dos distritos do [GeoSampa](https://geosampa.prefeitura.sp.gov.br) via
+© CARTO e © Esri; radar © RainViewer; relevo Copernicus DEM (© DLR e.V. 2010-2014 e © Airbus Defence
+and Space GmbH 2014-2018, via Open-Meteo); camadas de risco © GeoSampa/Prefeitura de São Paulo; limites dos distritos do [GeoSampa](https://geosampa.prefeitura.sp.gov.br) via
 [codigourbano/distritos-sp](https://github.com/codigourbano/distritos-sp).
 
 ## Machine Learning com dados reais
