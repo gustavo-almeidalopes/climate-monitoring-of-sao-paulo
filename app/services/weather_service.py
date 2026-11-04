@@ -531,6 +531,11 @@ class WeatherService:
                     print(f"[ML] overview: falha na inferência de {code}: {exc}")
                     prediction = None
                 if prediction is not None:
+                    try:
+                        from app.services.ops_service import log_nowcast
+                        await log_nowcast(session, code, prediction)
+                    except Exception as exc:  # pragma: no cover - registro nunca derruba o painel
+                        print(f"[ML] overview: falha ao registrar nowcast de {code}: {exc}")
                     nowcast = {
                         "as_of": prediction["as_of"],
                         "horizon_hours": prediction["horizon_hours"],
