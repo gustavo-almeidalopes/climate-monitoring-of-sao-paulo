@@ -15,6 +15,7 @@ Backend em FastAPI para monitoramento climatico de regioes de Sao Paulo.
 - `GET /api/v1/weather/metrics` - Indicadores operacionais de frescor por regiao
 - `GET /api/v1/weather/overview` - Painel numa chamada: leitura atual com nivel unificado, serie horaria -24 h...+48 h, tendencia de 6 h e nowcast do modelo por regiao (aditivo)
 - `GET /api/v1/weather/thresholds` - Limiares de chuva (5/20/40 mm/h) e cortes do indice de risco (25/50/75)
+- `/api/v1/ops/*` - Operacao (Fase 3), exige credencial: `me`, `teams` (GET/PATCH), `incidents` (abrir, `assign`, `arrive`, `resolve`), `report` (indicadores pos-evento)
 - `GET /api/v1/ml/status` - Versao do modelo, metricas vs. baselines, importancia das features, job de treino
 - `GET /api/v1/ml/predict/{id}` - Nowcast: probabilidade de chuva forte nas proximas horas, chuva esperada e risco 0-100 (observado + previsao)
 - `GET /api/v1/ml/dataset` - Cobertura da serie horaria real armazenada (por regiao e fonte)
@@ -116,6 +117,66 @@ Créditos: ícones no estilo [Feather Icons](https://feathericons.com) (MIT); ma
 © CARTO e © Esri; radar © RainViewer; relevo Copernicus DEM (© DLR e.V. 2010-2014 e © Airbus Defence
 and Space GmbH 2014-2018, via Open-Meteo); camadas de risco © GeoSampa/Prefeitura de São Paulo; limites dos distritos do [GeoSampa](https://geosampa.prefeitura.sp.gov.br) via
 [codigourbano/distritos-sp](https://github.com/codigourbano/distritos-sp).
+
+## Operação (Fase 3)
+
+**Perfis**: cidadão (sem login: alertas, mapa, previsão), **operador** (equipes, despacho,
+ocorrências, limiares) e **gestor** (indicadores, somente leitura). As credenciais são tokens em
+variáveis de ambiente do servidor:
+
+```bash
+export OPERATOR_TOKEN="$(openssl rand -hex 16)"
+export MANAGER_TOKEN="$(openssl rand -hex 16)"
+```
+
+Sem eles, as rotas `/api/v1/ops/*` respondem 503. No painel, abra com `?operador=1`, vá à aba
+**Operação** e entre com a credencial (fica só naquela aba do navegador). É um controle simples
+para piloto; em produção, troque por login individual.
+
+- **Equipes**: Defesa Civil, Bombeiros, CET, SAMU e subprefeitura, com status (disponível, em
+  deslocamento, em ocorrência, indisponível). **São dados de EXEMPLO (fictícios)** até haver
+  integração com os sistemas reais — rotulados em todo lugar. As bases ficam em instalações reais
+  do OpenStreetMap (quartéis e hospitais) ou no centro de cada subprefeitura.
+- **3 equipes mais rápidas**: "Escolher ponto no mapa" → tempo de chegada **por ruas** (OSRM, carro,
+  sem trânsito), com rotas alternativas que evitam células em nível Crítico quando custam até 50%
+  a mais; trechos críticos são destacados. Sem OSRM, aparece "estimativa em linha reta".
+- **Despacho e ocorrências**: abrir → equipe designada → no local → resolvida, com linha do tempo.
+- **Cobertura (isócronas 5/10/15 min)**: minutos de cada base até cada célula da grade, calculados
+  no CI (`data/geo/coverage.json`); células acima de 15 min aparecem hachuradas (buracos).
+- **Pré-posicionamento**: quando há chuva forte prevista (próximas 3 h) ou alerta do modelo numa
+  região, sugere levar a equipe de Defesa Civil/Bombeiros mais rápida até a célula mais suscetível.
+- **Relatório pós-evento** (`/ops/report`): chuva acumulada, ocorrências, tempos até despacho,
+  chegada e resolução, e **acerto do modelo** — cada nowcast servido é registrado e comparado depois
+  com a chuva observada.
+
+O servidor de rotas é configurável em `config.js` (`CLIMASP_OSRM_URL`); o padrão é o servidor
+público de demonstração do OSRM (uso moderado, sem garantia). Se as bases das equipes de exemplo
+mudarem, regenere `data/geo/example-bases.json` (há um teste que acusa a diferença) e rode o
+workflow de dados.
+
+## Desenvolvimento no Simulador iOS (macOS)
+
+O ClimaSP é um app web: roda no Safari de um iPhone no Simulador iOS, sem projeto Xcode e sem
+CocoaPods. Os scripts em `scripts/ios/` (bash 3.2, instalam só o que falta, nunca atualizam o que
+já existe) e o `CLAUDE.md` deixam o Claude Code usar o simulador como ambiente principal.
+
+```bash
+scripts/ios/doctor.sh      # diagnóstico (macOS, Xcode, runtime iOS, Python, Node, idb)
+scripts/ios/setup.sh       # instala o que falta (.venv, idb, fswatch, Playwright WebKit)
+scripts/ios/run.sh --watch # backend com recarga + Safari no iPhone + recarga automática do front
+```
+
+| Script | Para quê |
+|---|---|
+| `shot.sh [nome]` | screenshot do simulador em `logs/ios/` |
+| `ui.sh tree / tap X Y / type "…" / swipe` | inspecionar a árvore de acessibilidade e interagir (idb) |
+| `logs.sh [--follow / --safari]` | servidor, erros do navegador (`logs/client.log`) e log do WebKit |
+| `reload.sh`, `stop.sh` | recarregar a página; parar servidor e simulador |
+| `test.sh` | regressão: pytest + Playwright (Chromium e, no Mac, iPhone WebKit) |
+
+O `.mcp.json` registra o servidor MCP `ios-simulator` (screenshots, toques, digitação, árvore de
+acessibilidade) para o Claude Code. Os erros do Safari chegam ao servidor porque o `run.sh` abre o
+app com `?dev=1` e liga `DEV_CLIENT_LOG=true`.
 
 ## Machine Learning com dados reais
 

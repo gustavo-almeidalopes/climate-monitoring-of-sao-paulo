@@ -142,3 +142,19 @@ def test_example_bases_file_matches_backend_teams():
     keys = {b["key"] for b in data["bases"]}
     expected = {f"{t['lat']:.5f},{t['lng']:.5f}" for t in ops_service.example_teams()}
     assert keys == expected, "regenere data/geo/example-bases.json (ver README, Fase 3)"
+
+
+def test_dev_client_log_is_off_by_default_and_writes_when_enabled(client, monkeypatch, tmp_path):
+    from app.controllers import dev_controller
+
+    monkeypatch.delenv("DEV_CLIENT_LOG", raising=False)
+    get_settings.cache_clear()
+    entry = {"level": "error", "message": "TypeError: x is undefined", "source": "js/map.js:10:5", "url": "http://localhost:8000/"}
+    assert client.post("/api/v1/dev/client-log", json=entry).status_code == 404
+
+    monkeypatch.setenv("DEV_CLIENT_LOG", "true")
+    monkeypatch.setattr(dev_controller, "LOG_FILE", tmp_path / "client.log")
+    get_settings.cache_clear()
+    assert client.post("/api/v1/dev/client-log", json=entry).status_code == 204
+    assert "TypeError: x is undefined" in (tmp_path / "client.log").read_text(encoding="utf-8")
+    get_settings.cache_clear()
