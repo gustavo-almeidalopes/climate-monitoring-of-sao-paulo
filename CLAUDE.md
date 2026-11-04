@@ -1,0 +1,40 @@
+# ClimaSP — guia para o Claude Code
+
+Painel de risco de alagamento da Zona Norte de São Paulo. Backend FastAPI em `app/`; front-end
+web estático sem build (`index.html`, `styles.css`, `config.js`, módulos ES em `js/`).
+Interface em português do Brasil. Preserve a arquitetura: estado central em `js/store.js` +
+`js/state.js`, cada módulo assina o que exibe; critério único de nível em `app/core/risk_levels.py`
+espelhado em `js/risk.js`.
+
+## Regras do projeto
+- Não inventar dados geográficos ou de equipes: fonte real verificada (registrar em
+  `data/geo/metadata.json`/README) ou dado de exemplo explicitamente rotulado como fictício.
+- Mudanças de API são aditivas; não quebrar endpoints existentes.
+- Acessibilidade WCAG 2.1 AA nos dois temas; nunca depender só de cor (símbolos ⚠ ▲ → ✓).
+- Funcionar em 360 px sem rolagem horizontal.
+
+## Fluxo de trabalho com o Simulador iOS (no Mac)
+O app roda no Safari de um iPhone no Simulador iOS. Para cada alteração:
+
+1. **Implementar** a alteração.
+2. **Executar**: `scripts/ios/run.sh` (sobe o backend com recarga e abre o app no simulador).
+   Com `scripts/ios/watch.sh` rodando, o front recarrega sozinho a cada arquivo salvo;
+   senão, `scripts/ios/reload.sh`.
+3. **Inspecionar visualmente**: `scripts/ios/shot.sh <nome>` e ler o PNG impresso, ou a ferramenta
+   `screenshot`/`ui_view` do MCP `ios-simulator`.
+4. **Testar os comportamentos afetados** no próprio simulador: `ui_describe_all` para achar
+   elementos e coordenadas, `ui_tap`, `ui_type` (use `method: "paste"` para texto com acento),
+   `ui_swipe` — ou `scripts/ios/ui.sh tree|tap|type|swipe`.
+5. **Consultar logs**: `scripts/ios/logs.sh` (servidor + erros do navegador em `logs/client.log`),
+   `scripts/ios/logs.sh --safari 20` (log do WebKit no simulador).
+6. **Corrigir** o que aparecer e repetir; antes de concluir, `scripts/ios/test.sh`
+   (pytest + Playwright, incluindo iPhone WebKit) para regressões.
+
+Primeira vez no Mac: `scripts/ios/doctor.sh` (diagnóstico) → `scripts/ios/setup.sh` (instala só o
+que falta) → `scripts/ios/run.sh`. Credenciais de operação de desenvolvimento ficam em `.env.dev`
+(gerado pelo `run.sh`, fora do git); abra `http://localhost:8000/?dev=1&operador=1`.
+
+## Comandos úteis
+- Backend: `uvicorn app.main:app --reload --port 8000`
+- Testes: `pytest -q` · `cd e2e && npx playwright test --grep-invert @screenshot`
+- Capturas para PR: `cd e2e && SHOT_DIR=<pasta> SHOT_PREFIX=depois npx playwright test --grep @screenshot`
