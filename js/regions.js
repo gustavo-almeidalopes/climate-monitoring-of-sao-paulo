@@ -21,6 +21,18 @@ export const DISTRICT_TO_REGION = Object.freeze({
     "VILA MARIA": "MG", "VILA GUILHERME": "MG", "VILA MEDEIROS": "MG",
 });
 
+/** Nome de exibição dos distritos (os dados vêm em caixa alta, sem acento). */
+const DISTRICT_LABELS = {
+    "CASA VERDE": "Casa Verde", CACHOEIRINHA: "Cachoeirinha", LIMAO: "Limão",
+    SANTANA: "Santana", TUCURUVI: "Tucuruvi", MANDAQUI: "Mandaqui",
+    JACANA: "Jaçanã", TREMEMBE: "Tremembé",
+    "VILA MARIA": "Vila Maria", "VILA GUILHERME": "Vila Guilherme", "VILA MEDEIROS": "Vila Medeiros",
+};
+export function districtLabel(name) {
+    const key = String(name || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    return DISTRICT_LABELS[key] || String(name || "").toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+}
+
 const SAMPLE_VALUES = Object.freeze({
     CV: { temp: 24.5, hum: 80, rain: 5.7, wind: 12, risk: 48 },
     ST: { temp: 25.1, hum: 82, rain: 12.4, wind: 16, risk: 65 },

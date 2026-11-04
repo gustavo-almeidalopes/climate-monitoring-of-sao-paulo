@@ -129,13 +129,14 @@ function renderDetail() {
 }
 
 export function selectRegion(id, { focusMap = true } = {}) {
+    if (store.get().sideTab === "ops") document.getElementById("tabRegions")?.click();
     store.set({ selectedRegion: id });
     setDrawer(true);
     if (focusMap) onFocusRegion(id);
     requestAnimationFrame(() => { const t = $("#rdTitle"); if (t) t.focus(); });
 }
 
-function setDrawer(open) {
+export function setDrawer(open) {
     const panel = $("#sidePanel");
     panel.classList.toggle("open", open);
     // a gaveta precisa ficar acima do veredito/cabeçalho no celular

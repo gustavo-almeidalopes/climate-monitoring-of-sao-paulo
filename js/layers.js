@@ -9,7 +9,7 @@
  */
 import { api } from "./api.js";
 import { clusterLayer, clusterPin, svgPin } from "./cluster.js";
-import { REGION_META } from "./regions.js";
+import { REGION_META, districtLabel } from "./regions.js";
 import { $$, escapeHtml, fmtClock, normalizeName, timeAgo } from "./util.js";
 
 const L = window.L;
@@ -22,6 +22,7 @@ export const GEOSAMPA_ENABLED = {
     risco_hidrologico: { label: "Área de risco hidrológico (enchente/inundação em assentamento precário)", kind: "area" },
     risco_ocorrencia_alagamento: { label: "Ocorrência de alagamento registrada", kind: "point" },
     risco_ocorrencia_inundacao: { label: "Ocorrência de inundação registrada", kind: "point" },
+    reservatorio_amortecimento: { label: "Reservatório de amortecimento (piscinão)", kind: "area" },
 };
 
 async function getJson(url) {
@@ -72,6 +73,10 @@ function areaPopup(label, layerName, p) {
     if (p.qt_moradia != null) rows.push(`${escapeHtml(p.qt_moradia)} moradia(s) no setor`);
     if (p.dt_vistoria) rows.push(`Vistoria: ${escapeHtml(fmtDay(p.dt_vistoria))}`);
     if (p.qt_tempo_retorno) rows.push(`Tempo de retorno: ${escapeHtml(p.qt_tempo_retorno)} anos`);
+    if (p.nm_reservatorio) rows.push(`Reservatório: ${escapeHtml(p.nm_reservatorio)}${p.cd_reservatorio ? ` (${escapeHtml(p.cd_reservatorio)})` : ""}`);
+    if (p.tx_tipo_esvaziamento) rows.push(`Esvaziamento: ${escapeHtml(p.tx_tipo_esvaziamento)}${/bomba/i.test(p.tx_tipo_esvaziamento) ? " — ponto de bombeamento" : ""}`);
+    if (p.qt_volume_metro) rows.push(`Volume: ${escapeHtml(Number(p.qt_volume_metro).toLocaleString("pt-BR"))} m³`);
+    if (p.tx_monitoramento_tempo_real) rows.push(`Monitoramento em tempo real: ${escapeHtml(p.tx_monitoramento_tempo_real)}`);
     return `<div class="pu ps"><div class="pu-name">${escapeHtml(label)}</div>
         ${rows.map(r => `<div class="ps-note">${r}</div>`).join("")}
         <div class="pu-note">Fonte: GeoSampa — Prefeitura de São Paulo (camada ${escapeHtml(layerName)}).</div></div>`;
@@ -196,7 +201,7 @@ export function initLayers(map) {
             for (const name of districtMentioned(`${a.title} ${a.summary || ""}`, names)) {
                 const c = centroids[name];
                 points.push({ lat: c.lat, lng: c.lng, kind: "news", title: a.title, source: a.source, url: a.url,
-                    when: a.published_at || a.scraped_at, district: name.charAt(0) + name.slice(1).toLowerCase() });
+                    when: a.published_at || a.scraped_at, district: districtLabel(name) });
             }
         }
         news.setPoints(points);

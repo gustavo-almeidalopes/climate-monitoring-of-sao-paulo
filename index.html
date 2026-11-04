@@ -43,6 +43,7 @@
             <pattern id="hatch-high" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#E8590C" fill-opacity="0.14"></rect><line x1="0" y1="0" x2="0" y2="7" stroke="#E8590C" stroke-width="2.5" stroke-opacity="0.85"></line></pattern>
             <pattern id="hatch-critical" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#BE1554" fill-opacity="0.16"></rect><line x1="0" y1="0" x2="0" y2="7" stroke="#BE1554" stroke-width="2.5" stroke-opacity="0.9"></line></pattern>
             <pattern id="hatch-chart" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2.2"></line></pattern>
+            <pattern id="hatch-gap" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#6B6B6B" fill-opacity="0.12"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#6B6B6B" stroke-width="2" stroke-opacity="0.7"></line></pattern>
             <pattern id="hatch-sample" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="8" height="8" fill="#8C8C8C" fill-opacity="0.10"></rect>
                 <line x1="0" y1="0" x2="0" y2="8" stroke="#8C8C8C" stroke-width="2.5" stroke-opacity="0.55"></line>
@@ -86,6 +87,10 @@
         <symbol id="i-list" viewBox="0 0 24 24"><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></symbol>
         <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 12l6.5-6.5"/></symbol>
         <symbol id="i-road" viewBox="0 0 24 24"><path d="M8 3l-4 18M16 3l4 18M12 4v3M12 10.5v3M12 17v3"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+        <symbol id="i-cone" viewBox="0 0 24 24"><path d="M10 3h4l5 17H5L10 3z"/><path d="M8 11h8M6.5 16h11"/><path d="M3 21h18"/></symbol>
+        <symbol id="i-ambulance" viewBox="0 0 24 24"><path d="M2 17V7a1 1 0 0 1 1-1h11v11"/><path d="M14 10h4l4 4v3h-8"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M8 9v4M6 11h4"/></symbol>
+        <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4h6v4M8 7h2M14 7h2M8 11h2M14 11h2"/></symbol>
         <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
     </svg>
 
@@ -196,15 +201,86 @@
         <main class="map-wrap">
             <aside class="side-panel" id="sidePanel" aria-labelledby="sideTitle">
                 <div class="side-head">
-                    <h2 id="sideTitle">Regiões <span class="side-count" id="rlCount">0</span></h2>
-                    <span class="side-sort">por nível de perigo</span>
+                    <div class="side-tabs" role="tablist" aria-label="Painel">
+                        <button type="button" class="side-tab active" role="tab" aria-selected="true" data-tab="regions" id="tabRegions" aria-controls="regionsPane">
+                            <span id="sideTitle">Regiões</span> <span class="side-count" id="rlCount">0</span></button>
+                        <button type="button" class="side-tab" role="tab" aria-selected="false" data-tab="ops" id="tabOps" aria-controls="opsPanel" hidden>Operação</button>
+                    </div>
                     <button type="button" class="side-close" id="sideClose" aria-label="Fechar lista de regiões">
                         <svg class="i" aria-hidden="true"><use href="#i-x"></use></svg>
                     </button>
                 </div>
                 <div class="side-scroll">
-                    <ul class="region-list" id="regionList" aria-label="Regiões ordenadas por nível de perigo"></ul>
-                    <section class="region-detail" id="regionDetail" aria-label="Detalhe da região"></section>
+                    <div id="regionsPane" role="tabpanel" aria-labelledby="tabRegions">
+                        <p class="side-sort">Ordenadas por nível de perigo</p>
+                        <ul class="region-list" id="regionList" aria-label="Regiões ordenadas por nível de perigo"></ul>
+                        <section class="region-detail" id="regionDetail" aria-label="Detalhe da região"></section>
+                    </div>
+                    <section class="ops-panel" id="opsPanel" role="tabpanel" aria-labelledby="tabOps">
+                        <div id="opsLogin">
+                            <h3 class="ops-h">Acesso de operação</h3>
+                            <p class="ops-note">Equipes, despacho e indicadores são restritos a operadores e gestores.</p>
+                            <form id="opsLoginForm" class="ops-login">
+                                <label for="opsToken">Credencial de operador ou gestor</label>
+                                <input id="opsToken" type="password" autocomplete="current-password" required>
+                                <button type="submit" class="ops-btn">Entrar</button>
+                            </form>
+                            <p class="ops-error" id="opsLoginError" role="alert" hidden></p>
+                            <button type="button" class="ops-link" id="opsExitMode">Sair do modo operador</button>
+                        </div>
+                        <div id="opsBody" hidden>
+                            <div class="ops-who"><span id="opsWho"></span><button type="button" class="ops-link" id="opsLogout">Sair da conta</button></div>
+                            <p class="pu-age sample" id="opsTeamsNote" hidden>Equipes de EXEMPLO (fictícias) até haver integração com os sistemas reais.</p>
+
+                            <section class="ops-sec">
+                                <h3 class="ops-h">Sugestões de pré-posicionamento</h3>
+                                <ul class="ops-list" id="opsSuggestions"></ul>
+                            </section>
+
+                            <section class="ops-sec" id="opsDispatchBox">
+                                <h3 class="ops-h">Despacho · 3 equipes mais rápidas</h3>
+                                <button type="button" class="ops-btn" id="opsPick" aria-pressed="false">Escolher ponto no mapa</button>
+                                <p class="ops-note" id="opsTargetInfo" aria-live="polite"></p>
+                                <label class="ops-field" for="opsDescription">Descrição da ocorrência (opcional)</label>
+                                <input id="opsDescription" class="ops-input" type="text" maxlength="300" placeholder="Ex.: rua alagada, carro ilhado">
+                                <div id="opsCandidates" aria-live="polite"></div>
+                            </section>
+
+                            <section class="ops-sec">
+                                <h3 class="ops-h">Ocorrências ativas</h3>
+                                <ul class="ops-list" id="opsIncidents"></ul>
+                                <details class="ops-details"><summary>Resolvidas recentemente (<span id="opsResolvedCount">0</span>)</summary>
+                                    <ul class="ops-list" id="opsResolved"></ul></details>
+                            </section>
+
+                            <section class="ops-sec">
+                                <h3 class="ops-h">Cobertura · isócronas</h3>
+                                <label class="ops-check"><input type="checkbox" id="opsCoverageToggle"> Mostrar tempo até a base mais próxima</label>
+                                <label class="ops-field" for="opsCoverageKind">Equipes consideradas</label>
+                                <select id="opsCoverageKind" class="ops-input">
+                                    <option value="todas">Todas</option><option value="bombeiros">Bombeiros</option><option value="samu">SAMU</option>
+                                    <option value="defesa_civil">Defesa Civil</option><option value="subprefeitura">Subprefeitura</option><option value="cet">CET</option>
+                                </select>
+                                <ul class="cov-legend" id="opsCoverageLegend"></ul>
+                                <p class="ops-note" id="opsCoverageSummary" aria-live="polite"></p>
+                            </section>
+
+                            <section class="ops-sec">
+                                <h3 class="ops-h">Equipes</h3>
+                                <ul class="ops-list" id="opsTeams"></ul>
+                            </section>
+
+                            <section class="ops-sec">
+                                <h3 class="ops-h">Indicadores e relatório pós-evento</h3>
+                                <div class="ops-row">
+                                    <label class="sr-only" for="opsReportHours">Janela do relatório</label>
+                                    <select id="opsReportHours" class="ops-input"><option value="24">Últimas 24 h</option><option value="72">Últimas 72 h</option><option value="168">Últimos 7 dias</option></select>
+                                    <button type="button" class="ops-btn" id="opsReportRefresh">Atualizar</button>
+                                </div>
+                                <div id="opsReport"></div>
+                            </section>
+                        </div>
+                    </section>
                 </div>
             </aside>
             <div class="map-inner">
