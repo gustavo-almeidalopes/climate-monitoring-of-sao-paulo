@@ -10,6 +10,7 @@ import { effectiveThresholds, store } from "./state.js";
 import { $, escapeHtml, fmt1, fmtClock } from "./util.js";
 
 let onFocusRegion = () => {};
+const STALE_MS = 10 * 60_000;
 
 /** O mapa registra aqui como centralizar uma região (evita dependência circular). */
 export function setFocusHandler(fn) { onFocusRegion = fn; }
@@ -24,20 +25,23 @@ function rowHtml(region, d, state) {
     const tr = trendInfo(region, state.now);
     const c = state.changes?.[region.id] || {};
     const concern = !sample && forecastConcern(region, effectiveThresholds(state), state.now);
+    // A idade do dado já aparece no veredito; na linha, só quando esta região está atrasada.
+    const stale = !sample && region.recordedAt && state.updatedAt && state.updatedAt - region.recordedAt >= STALE_MS;
     return `<li>
         <button type="button" class="rl-row lvl-${sample ? "sample" : d.level} ${c.level || c.rain ? "changed" : ""}"
             data-region="${region.id}" aria-describedby="rl-sub-${region.id}">
-            <span class="rl-sym" aria-hidden="true">${sample ? "?" : d.symbol}</span>
             <span class="rl-main">
-                <span class="rl-name">${escapeHtml(region.short)} ${badge(d, sample)}</span>
+                <span class="rl-name"><span class="rl-title">${escapeHtml(region.short)}</span> ${badge(d, sample)}</span>
                 <span class="rl-sub" id="rl-sub-${region.id}">
-                    <span class="rl-rain ${c.rain ? "is-changed" : ""}">${fmt1(region.rain)} mm/h</span>
-                    ${sample ? '<span class="sample-tag">exemplo</span>' : `<span class="rl-trend t-${tr.direction}"><span aria-hidden="true">${tr.symbol}</span> ${escapeHtml(tr.text)}</span>`}
-                    ${concern ? `<span class="rl-fc lvl-${concern.danger.level}"><span aria-hidden="true">${concern.danger.symbol}</span> ${concern.danger.label} previsto ${concern.hoursAhead <= 1 ? "na próxima hora" : `em até ${concern.hoursAhead} h`}</span>` : ""}
+                    ${sample ? '<span class="sample-tag">exemplo</span>' : `<span class="rl-trend t-${tr.direction}">${escapeHtml(tr.text)}</span>`}
+                    ${concern ? `<span class="rl-fc lvl-${concern.danger.level}">${concern.danger.label} previsto ${concern.hoursAhead <= 1 ? "na próxima hora" : `em até ${concern.hoursAhead} h`}</span>` : ""}
                 </span>
-                ${!sample && region.recordedAt ? `<span class="rl-age">dado de ${agoText(region.recordedAt, state.now)}</span>` : ""}
+                ${stale ? `<span class="rl-age">dado de ${agoText(region.recordedAt, state.now)}</span>` : ""}
             </span>
-            <span class="rl-spark">${sample ? "" : sparkline(region.recent)}</span>
+            <span class="rl-aside">
+                <span class="rl-rain ${c.rain ? "is-changed" : ""}">${fmt1(region.rain)}<small> mm/h</small></span>
+                <span class="rl-spark">${sample ? "" : sparkline(region.recent, { width: 64, height: 20 })}</span>
+            </span>
         </button>
     </li>`;
 }
@@ -61,7 +65,7 @@ function nowcastBlock(region, state) {
     }
     return `<div class="next3 ${n.alert ? "alert" : ""}">
         <h4>Próximas 3 h</h4>
-        <p class="next3-head">${n.alert ? '<span class="next3-flag">⚠ atenção</span>' : ""}${escapeHtml(n.headline)}</p>
+        <p class="next3-head">${n.alert ? '<span class="next3-flag">Atenção</span>' : ""}${escapeHtml(n.headline)}</p>
         ${n.expected ? `<p class="next3-sub">${escapeHtml(n.expected)}</p>` : ""}
         ${forecastNextHours(region, state)}
         <p class="next3-quality">${escapeHtml(n.quality)}</p>
@@ -74,7 +78,7 @@ function forecastNextHours(region, state) {
     if (!next.length) return "";
     return `<ul class="next3-hours">${next.map(p => {
         const d = levelOf(p, thresholds);
-        return `<li><span>${fmtClock(p.t)}</span><span>${fmt1(p.rain)} mm/h</span><span class="lvl-${d.level}"><span aria-hidden="true">${d.symbol}</span> ${d.label}</span></li>`;
+        return `<li><span>${fmtClock(p.t)}</span><span>${fmt1(p.rain)} mm/h</span><span class="lvl-${d.level}"><span class="lvl-dot lvl-${d.level}" aria-hidden="true"></span>${d.label}</span></li>`;
     }).join("")}</ul><p class="next3-src">Chuva prevista hora a hora (Open-Meteo).</p>`;
 }
 
@@ -97,7 +101,6 @@ function renderDetail() {
     view.innerHTML = `
         <button type="button" class="rd-back" id="rdBack">${icon("chevron-left")} Todas as regiões</button>
         <div class="rd-head lvl-${sample ? "sample" : d.level}">
-            <span class="rd-sym" aria-hidden="true">${sample ? "?" : d.symbol}</span>
             <div><h3 id="rdTitle" tabindex="-1">${escapeHtml(region.short)}</h3><p class="rd-sub">${escapeHtml(region.name)}</p></div>
             ${badge(d, sample)}
         </div>
@@ -106,7 +109,7 @@ function renderDetail() {
         <dl class="rd-facts">
             <div><dt>Chuva agora</dt><dd>${fmt1(region.rain)} mm/h</dd></div>
             <div><dt>Índice de risco</dt><dd>${region.risk ?? "—"}/100${region.riskSource === "ml" ? "" : ' <small>(heurístico)</small>'}</dd></div>
-            <div><dt>Tendência</dt><dd><span aria-hidden="true">${tr.symbol}</span> ${escapeHtml(tr.text)}</dd></div>
+            <div><dt>Tendência</dt><dd>${escapeHtml(tr.text)}</dd></div>
             <div><dt>Leitura</dt><dd>${region.recordedAt ? `${fmtClock(region.recordedAt)} · ${agoText(region.recordedAt, state.now)}` : "—"}</dd></div>
         </dl>
         ${nowcastBlock(region, state)}

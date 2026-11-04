@@ -122,7 +122,7 @@ test.describe("alertas com memória (item 5)", () => {
         await page.locator("#btnAlerts").click();
         const panel = page.locator("#alertHistory");
         await expect(panel).toBeVisible();
-        await expect(panel.locator(".ah-item").first()).toContainText("Santana: Alto → Crítico");
+        await expect(panel.locator(".ah-item").first()).toContainText("Santana: de Alto para Crítico");
         await expect(panel.locator(".ah-item")).toHaveCount(2);
         await page.keyboard.press("Escape");
         await expect(panel).toBeHidden();
@@ -234,12 +234,15 @@ test.describe("fundação", () => {
         await expect(page.locator('link[href*="leaflet@1.9.4/dist/leaflet.css"]')).toHaveAttribute("integrity", sri("leaflet.css"));
     });
 
-    test("sem emojis como ícones na interface", async ({ page }) => {
-        await open(page, { apiDown: true });
-        // Emojis (🌧️ 🛰️ 📰 …). Os símbolos de nível ⚠ ▲ → ✓ são texto e continuam.
-        const html = await page.content();
-        expect(html).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2B1B}]/u);
-    });
+    for (const [name, opts] of [["offline", { apiDown: true }], ["online com alerta", { current: currentPayload({ ST: { rain: 25, risk: 70 }, CV: { rain: 6 } }) }]]) {
+        test(`sem emojis nem glifos de nível na interface · ${name}`, async ({ page }) => {
+            await open(page, opts);
+            // Emojis (🌧️ 🛰️ 📰 …) e glifos usados como ícone (⚠ ▲ ▼ ✓ → ▶ •): o nível é cor + texto,
+            // os ícones são SVG do sprite.
+            const text = await page.evaluate(() => document.body.innerText);
+            expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{25A0}-\u{25FF}\u{2190}-\u{21FF}\u{2022}\u{FE0F}]/u);
+        });
+    }
 
     test("sem rolagem horizontal da página", async ({ page }) => {
         await open(page, { apiDown: true });

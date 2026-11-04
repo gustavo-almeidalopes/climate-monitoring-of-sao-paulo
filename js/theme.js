@@ -19,8 +19,10 @@ function apply(theme, animate) {
     const btn = $("#btnTheme");
     btn.setAttribute("aria-pressed", String(!dark));
     btn.title = dark ? "Mudar para tema claro" : "Mudar para tema escuro";
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", dark ? "#08080A" : "#F7F3EE");
+    document.querySelectorAll('meta[name="theme-color"]').forEach(meta => {
+        meta.removeAttribute("media");
+        meta.setAttribute("content", dark ? "#000000" : "#F2F2F7");
+    });
 }
 
 export function initTheme() {
