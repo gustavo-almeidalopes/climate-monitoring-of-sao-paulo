@@ -4,7 +4,7 @@ Backend em FastAPI para monitoramento climatico de regioes de Sao Paulo.
 
 ## Endpoints
 
-- `GET /` - Info da API
+- `GET /` - Painel (index.html); `styles.css`, `config.js` e `js/*` servidos ao lado
 - `GET /health` - Health check com status das fontes, scheduler e frescor dos dados
 - `GET /api/v1/weather/regions` - Lista regioes monitoradas
 - `GET /api/v1/weather/current` - Dados atuais de todas as regioes
@@ -19,6 +19,63 @@ Backend em FastAPI para monitoramento climatico de regioes de Sao Paulo.
 - `GET /api/v1/ml/runs` - Historico das execucoes de treino
 - `POST /api/v1/ml/ingest?years=3` - Baixa (incremental) o historico horario real
 - `POST /api/v1/ml/train?years=3` - Coleta + treino em background (`/train/sync` aguarda o fim)
+
+## Front-end (painel)
+
+Site estático, sem build: `index.html` (marcação + sprite de ícones SVG), `styles.css`, `config.js` e
+módulos ES nativos em `js/`. É o mesmo conjunto publicado na Vercel e servido pelo FastAPI em `/`.
+
+| Módulo | Papel |
+|---|---|
+| `js/store.js` | Store central com assinantes (`subscribe(seletor, callback)`) |
+| `js/state.js` | Estado global: conexão, origem dos dados (real/exemplo), regiões, limiares, alertas |
+| `js/weather.js` | Busca `/weather/thresholds` e `/weather/current`, atualização automática a cada 5 min |
+| `js/risk.js` | Critério único de nível de perigo (mapa, cartões, popups, busca e alertas) |
+| `js/map.js` | Leaflet: mapa base que segue o tema, distritos, zonas, popups |
+| `js/alerts.js` | Faixa de alerta com memória por nível e histórico (sino) |
+| `js/status.js` | Indicador de conexão, banner de modo offline e cartões de resumo |
+| `js/search.js` | Busca (Nominatim) com o nível de perigo da subprefeitura do ponto |
+| `js/news.js` | Gaveta de notícias |
+| `js/operator.js` | Modo operador (limiares locais) |
+
+Cada módulo assina a fatia do estado que exibe e se redesenha sozinho; não há chamadas de render
+manuais entre módulos.
+
+**URL do backend** — edite `config.js` (`window.CLIMASP_API_BASE = "https://seu-backend"`). Vazio =
+`http://localhost:8000` em desenvolvimento e a própria origem nos demais casos. Na Vercel o site é só
+estático: sem essa URL o painel mostra o banner "Sem conexão — dados de exemplo".
+
+**Modo offline** — sem servidor, o painel exibe valores de exemplo acinzentados, marcados como
+"exemplo", com banner explícito e sem alertas. Se a conexão cai depois de uma leitura real, mantém a
+última leitura e informa o horário dela.
+
+**Modo operador** — os limiares ficam ocultos para o público. Abra com `?operador=1` (vale para a
+sessão da aba; `?operador=0` ou o botão "Sair" desliga). Limiares ajustados valem só naquele
+navegador e são sinalizados na legenda. Não é controle de acesso.
+
+**Rodar localmente** — módulos ES não funcionam abrindo o arquivo direto (`file://`); sirva por HTTP:
+
+```bash
+uvicorn app.main:app --reload --port 8000   # API + painel em http://localhost:8000
+```
+
+ou, só o front-end (a API continua em `localhost:8000`):
+
+```bash
+python3 -m http.server 4173
+```
+
+**Testes do front-end** (Playwright + axe, com rede simulada):
+
+```bash
+cd e2e && npm ci && npx playwright install chromium
+npx playwright test --grep-invert @screenshot
+SHOT_PREFIX=depois npx playwright test --grep @screenshot   # capturas em docs/screenshots/fase-0/
+```
+
+Créditos: ícones no estilo [Feather Icons](https://feathericons.com) (MIT); mapas base © OpenStreetMap,
+© CARTO e © Esri; limites dos distritos do [GeoSampa](https://geosampa.prefeitura.sp.gov.br) via
+[codigourbano/distritos-sp](https://github.com/codigourbano/distritos-sp).
 
 ## Machine Learning com dados reais
 
