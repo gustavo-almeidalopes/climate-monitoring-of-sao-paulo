@@ -98,8 +98,9 @@ test.describe("Fase 1 · lista e detalhe", () => {
         await expect(rows.nth(0)).toHaveAttribute("data-region", "ST");
         await expect(rows.nth(1)).toHaveAttribute("data-region", "CV");
         await expect(rows.nth(0)).toContainText("24,5 mm/h");
-        await expect(rows.nth(0)).toContainText("▲ subindo há 40 min");
-        await expect(rows.nth(0)).toContainText("dado de 3 min atrás");
+        await expect(rows.nth(0)).toContainText("subindo há 40 min");
+        // a idade do dado fica no veredito; a linha só repete quando a região está atrasada
+        await expect(rows.nth(0)).not.toContainText("dado de");
         await expect(rows.nth(0).locator("svg.spark")).toHaveCount(1);
 
         await rows.nth(0).click();

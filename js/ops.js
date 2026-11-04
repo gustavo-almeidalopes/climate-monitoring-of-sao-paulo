@@ -27,10 +27,10 @@ export const KINDS = {
     subprefeitura: { label: "Subprefeitura", icon: "building" },
 };
 export const STATUS = {
-    disponivel: { label: "Disponível", glyph: "✓" },
-    em_deslocamento: { label: "Em deslocamento", glyph: "→" },
-    em_ocorrencia: { label: "Em ocorrência", glyph: "●" },
-    indisponivel: { label: "Indisponível", glyph: "×" },
+    disponivel: { label: "Disponível", icon: "check" },
+    em_deslocamento: { label: "Em deslocamento", icon: "arrow-right" },
+    em_ocorrencia: { label: "Em ocorrência", icon: "alert-triangle" },
+    indisponivel: { label: "Indisponível", icon: "x" },
 };
 const INCIDENT_STEPS = [
     ["aberta", "Aberta"], ["despachada", "Equipe designada"], ["no_local", "No local"], ["resolvida", "Resolvida"],
@@ -200,7 +200,7 @@ function teamIcon(team) {
     return L.divIcon({
         className: `team-pin st-${team.status}`,
         html: `<span class="team-badge kind-${team.kind}"><svg class="i" aria-hidden="true"><use href="#i-${k.icon}"></use></svg>` +
-            `<b class="team-st" aria-hidden="true">${STATUS[team.status]?.glyph || "?"}</b></span>`,
+            `<b class="team-st" aria-hidden="true">${icon(STATUS[team.status]?.icon || "x")}</b></span>`,
         iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -14],
     });
 }
@@ -208,7 +208,7 @@ function teamIcon(team) {
 function teamPopup(team) {
     const k = KINDS[team.kind];
     return `<div class="pu ps"><div class="pu-name">${escapeHtml(team.name)}</div>
-        <div class="ps-note">${k.label} · <strong>${STATUS[team.status].glyph} ${STATUS[team.status].label}</strong></div>
+        <div class="ps-note">${k.label} · <strong>${STATUS[team.status].label}</strong></div>
         <div class="ps-note">Base: ${escapeHtml(team.base_name)}</div>
         ${team.is_example ? '<div class="pu-age sample">EXEMPLO FICTÍCIO — equipe inexistente, só para demonstrar o fluxo.</div>' : ""}
         <div class="pu-note">Local da base: ${escapeHtml(team.base_source)}</div></div>`;
@@ -395,7 +395,7 @@ function timelineHtml(inc, teams) {
     const at = { aberta: inc.opened_at, despachada: inc.assigned_at, no_local: inc.arrived_at, resolvida: inc.resolved_at };
     return `<ol class="inc-steps">${INCIDENT_STEPS.map(([s, label], i) => `
         <li class="${i <= reached ? "done" : ""} ${i === reached ? "current" : ""}">
-            <span class="inc-dot" aria-hidden="true">${i <= reached ? "✓" : ""}</span>
+            <span class="inc-dot" aria-hidden="true">${i <= reached ? icon("check") : ""}</span>
             <span>${label}${at[s] ? ` <time datetime="${at[s]}">${fmtClock(Date.parse(at[s]))}</time>` : ""}</span>
         </li>`).join("")}</ol>`;
 }
@@ -432,7 +432,9 @@ function candidatesHtml(c) {
                 <span class="cand-rank">${i + 1}</span>
                 <span class="cand-body"><strong>${escapeHtml(x.team.name)}</strong>
                     <span class="cand-sub">${KINDS[x.team.kind].label} · <strong>${Math.round(x.minutes)} min</strong>${x.route.km ? ` · ${fmt1(x.route.km)} km` : ""}${x.estimated ? " (estimativa em linha reta)" : ""}</span>
-                    <span class="cand-flag">${x.route.critical && !x.route.avoided ? "⚠ passa por zona crítica" : x.route.avoided ? "✓ rota alternativa evita zona crítica" : "✓ rota fora de zona crítica"}</span>
+                    <span class="cand-flag ${x.route.critical && !x.route.avoided ? "warn" : ""}">${x.route.critical && !x.route.avoided
+                        ? `${icon("alert-triangle")} passa por zona crítica`
+                        : `${icon("check")} ${x.route.avoided ? "rota alternativa evita zona crítica" : "rota fora de zona crítica"}`}</span>
                 </span>
             </button>
             ${role === "operador" ? `<button type="button" class="ops-btn" data-dispatch="${i}">Despachar</button>` : ""}
@@ -500,8 +502,8 @@ function renderPanel() {
         <span class="team-name">${escapeHtml(t.name)}<span class="pu-note"> ${KINDS[t.kind].label}</span></span>
         ${role === "operador"
             ? `<label class="sr-only" for="st-${t.id}">Status de ${escapeHtml(t.name)}</label>
-               <select id="st-${t.id}" data-team-status="${t.id}">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === t.status ? "selected" : ""}>${v.glyph} ${v.label}</option>`).join("")}</select>`
-            : `<span class="team-st-text">${STATUS[t.status].glyph} ${STATUS[t.status].label}</span>`}
+               <select id="st-${t.id}" data-team-status="${t.id}">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === t.status ? "selected" : ""}>${v.label}</option>`).join("")}</select>`
+            : `<span class="team-st-text">${STATUS[t.status].label}</span>`}
     </li>`).join("");
     $("#opsTeamsNote").hidden = !teams.some(t => t.is_example);
 

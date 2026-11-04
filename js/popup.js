@@ -29,8 +29,8 @@ function nextHours(region, thresholds, now, model) {
     const concern = forecastConcern(region, thresholds, now);
     const n = nowcastText(region.nowcast, model);
     const parts = [];
-    if (concern) parts.push(`<strong class="lvl-${concern.danger.level}">${concern.danger.symbol} ${concern.danger.label}</strong> previsto ${concern.hoursAhead <= 1 ? "na próxima hora" : `em até ${concern.hoursAhead} h`} (${fmt1(concern.point.rain)} mm/h)`);
-    if (n) parts.push(`${n.alert ? "⚠ " : ""}${escapeHtml(n.headline)} <span class="pu-note">— modelo experimental</span>`);
+    if (concern) parts.push(`<strong class="lvl-${concern.danger.level}">${concern.danger.label}</strong> previsto ${concern.hoursAhead <= 1 ? "na próxima hora" : `em até ${concern.hoursAhead} h`} (${fmt1(concern.point.rain)} mm/h)`);
+    if (n) parts.push(`${n.alert ? "<strong>Atenção:</strong> " : ""}${escapeHtml(n.headline)} <span class="pu-note">— modelo experimental</span>`);
     if (!parts.length) return "";
     return `<div class="pu-next"><div class="pu-next-h">Próximas 3 h</div>${parts.map(p => `<div>${p}</div>`).join("")}</div>`;
 }

@@ -1,5 +1,5 @@
 /*
- * Linha do tempo do mapa: −24 h (observado) … agora … +48 h (previsto), com ▶ para animar.
+ * Linha do tempo do mapa: −24 h (observado) … agora … +48 h (previsto), com botão para animar.
  * Muda store.timeOffset; o mapa redesenha as zonas com os valores daquela hora
  * (previsto aparece hachurado com contorno tracejado).
  */

@@ -2,7 +2,7 @@
  * Faixa de alerta com memória por nível + histórico de alertas (ícone de sino).
  *
  * Memória: fechar a faixa guarda { level, ids } na sessão. Ela reaparece se o
- * nível piorar (ex.: Alto → Crítico) ou se outra região entrar no mesmo nível.
+ * nível piorar (ex.: de Alto para Crítico) ou se outra região entrar no mesmo nível.
  * Se a situação melhorar, a memória acompanha a queda — assim uma nova piora
  * volta a alertar. Abaixo de "Alto" a memória é apagada.
  *
@@ -143,10 +143,10 @@ function renderHistory([history, seenAt, now]) {
     list.innerHTML = history.map(e => {
         const to = LEVELS[e.to] || LEVELS.low;
         const from = e.from ? LEVELS[e.from] : null;
-        const change = from ? `${from.label} → ${to.label}` : `entrou em ${to.label}`;
+        const change = from ? `de ${from.label} para ${to.label}` : `entrou em ${to.label}`;
         const worse = !from || to.rank > from.rank;
         return `<li class="ah-item ${e.t > seenAt ? "unread" : ""}">
-            <span class="ah-sym lvl-${to.level}" aria-hidden="true">${to.symbol}</span>
+            <span class="lvl-dot lvl-${to.level}" aria-hidden="true"></span>
             <div class="ah-body">
                 <div class="ah-title">${escapeHtml(e.short)}: ${escapeHtml(change)}
                     <span class="sr-only">${worse ? "(piorou)" : "(melhorou)"}</span></div>

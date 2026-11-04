@@ -76,7 +76,7 @@ export function rainBars(series, { now = Date.now(), thresholds }) {
         .join("");
     const refLabels = [["medium", thresholds.yellow], ["high", thresholds.orange], ["critical", thresholds.red]]
         .filter(([, v]) => v <= yMax)
-        .map(([lvl, v]) => `<span class="ref-label lvl-${lvl}" style="top:${((y(v) / H) * 100).toFixed(1)}%">${LEVELS[lvl].symbol} ${v}</span>`)
+        .map(([lvl, v]) => `<span class="ref-label lvl-${lvl}" style="top:${((y(v) / H) * 100).toFixed(1)}%">${v}</span>`)
         .join("");
     return `<div class="chart" role="img" aria-label="Gráfico de barras da chuva por hora, das últimas 24 horas às próximas 48 horas. Máximo de ${fmt1(maxRain)} mm/h. Dados também na tabela abaixo.">
         <div class="chart-ymax" aria-hidden="true">${fmt1(maxRain)} mm/h</div>
@@ -138,7 +138,7 @@ export function dataTable(series, thresholds) {
     const rows = (series || []).map(p => {
         const d = levelOf(p, thresholds);
         return `<tr><td>${fmtDateTime(p.t)}</td><td>${p.kind === "forecast" ? "previsto" : "observado"}</td>` +
-            `<td>${fmt1(p.rain)}</td><td>${p.risk ?? "—"}</td><td>${d.symbol} ${d.label}</td></tr>`;
+            `<td>${fmt1(p.rain)}</td><td>${p.risk ?? "—"}</td><td><span class="lvl-dot lvl-${d.level}" aria-hidden="true"></span>${d.label}</td></tr>`;
     }).join("");
     return `<details class="chart-table"><summary>Ver dados em tabela</summary>
         <div class="table-scroll" tabindex="0" role="region" aria-label="Tabela de chuva e risco por hora (role para ver tudo)"><table><caption class="sr-only">Chuva e risco por hora</caption>

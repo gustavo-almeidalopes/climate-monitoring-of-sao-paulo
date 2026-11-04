@@ -164,3 +164,16 @@ test("modo operador logado não cria rolagem horizontal (360 px)", async ({ page
     expect(overflow).toBeLessThanOrEqual(0);
     await expect(page.locator("#opsSuggestions")).not.toContainText("limao");
 });
+
+test("painel de operação sem emojis nem glifos (ícones SVG + texto)", async ({ page }, info) => {
+    await open(page, info, { values: { CV: { rain: 3, forecast: h => (h === 1 ? 28 : 2) } } });
+    await login(page);
+    await page.locator("#opsPick").click();
+    const box = await page.locator("#map").boundingBox();
+    await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.5);
+    await expect(page.locator("#opsCandidates .cand")).toHaveCount(3);
+    await page.locator("#opsCandidates [data-dispatch]").first().click();
+    await expect(page.locator("#opsIncidents .inc-card")).toHaveCount(1);
+    const text = await page.evaluate(() => document.body.innerText);
+    expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{25A0}-\u{25FF}\u{2190}-\u{21FF}\u{2022}\u{FE0F}]/u);
+});
