@@ -23,6 +23,7 @@ async function request(path, { method = "GET", timeout = 12000 } = {}) {
 export const api = {
     thresholds: () => request("/api/v1/weather/thresholds"),
     current: () => request("/api/v1/weather/current"),
+    overview: () => request("/api/v1/weather/overview"),
     news: () => request("/api/v1/news/?limit=40&hours=72&min_relevance=1"),
     scrapeNews: () => request("/api/v1/news/scrape", { method: "POST", timeout: 60000 }),
 };

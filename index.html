@@ -38,6 +38,11 @@
     <!-- Sprite de ícones (traço 24px, no estilo Feather Icons — MIT) e padrões do mapa -->
     <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
         <defs>
+            <pattern id="hatch-low" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#2F8A4C" fill-opacity="0.05"></rect><line x1="0" y1="0" x2="0" y2="9" stroke="#2F8A4C" stroke-width="1.5" stroke-opacity="0.28"></line></pattern>
+            <pattern id="hatch-medium" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#CFA22A" fill-opacity="0.12"></rect><line x1="0" y1="0" x2="0" y2="7" stroke="#CFA22A" stroke-width="2.5" stroke-opacity="0.8"></line></pattern>
+            <pattern id="hatch-high" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#E8590C" fill-opacity="0.14"></rect><line x1="0" y1="0" x2="0" y2="7" stroke="#E8590C" stroke-width="2.5" stroke-opacity="0.85"></line></pattern>
+            <pattern id="hatch-critical" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#BE1554" fill-opacity="0.16"></rect><line x1="0" y1="0" x2="0" y2="7" stroke="#BE1554" stroke-width="2.5" stroke-opacity="0.9"></line></pattern>
+            <pattern id="hatch-chart" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2.2"></line></pattern>
             <pattern id="hatch-sample" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="8" height="8" fill="#8C8C8C" fill-opacity="0.10"></rect>
                 <line x1="0" y1="0" x2="0" y2="8" stroke="#8C8C8C" stroke-width="2.5" stroke-opacity="0.55"></line>
@@ -72,6 +77,15 @@
         <symbol id="i-external-link" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
         <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></symbol>
         <symbol id="i-chevron-up" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></symbol>
+        <symbol id="i-hospital" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 7.5v9M7.5 12h9"/></symbol>
+        <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2.5c.8 3.2 4.5 5.1 4.5 9.6A4.5 4.5 0 0 1 12 21.5a4.5 4.5 0 0 1-4.5-4.4c0-2.6 1.7-3.9 2.4-5.6.5 1.4 1.4 2.2 2.4 2.5-.6-2.8-.4-5.6-.3-11.5z"/></symbol>
+        <symbol id="i-crosshair" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" fill="currentColor"/></symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor"/></symbol>
+        <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></symbol>
+        <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 12l6.5-6.5"/></symbol>
+        <symbol id="i-road" viewBox="0 0 24 24"><path d="M8 3l-4 18M16 3l4 18M12 4v3M12 10.5v3M12 17v3"/></symbol>
         <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
     </svg>
 
@@ -153,18 +167,25 @@
         </div>
         <div class="sr-only" id="srAnnouncer" aria-live="assertive" aria-atomic="true"></div>
 
+        <section class="verdict tone-calm" id="verdict" aria-labelledby="verdictTitle">
+            <div class="verdict-sym" id="verdictSym" aria-hidden="true">…</div>
+            <div class="verdict-body">
+                <h1 class="verdict-title" id="verdictTitle" aria-live="polite">Carregando dados…</h1>
+                <p class="verdict-detail" id="verdictDetail"></p>
+            </div>
+            <button type="button" class="verdict-regions" id="btnRegions" aria-controls="sidePanel" aria-expanded="false">
+                <svg class="i" aria-hidden="true"><use href="#i-list"></use></svg> Regiões
+            </button>
+        </section>
+
         <ul class="stats-bar" id="statsBar" aria-label="Resumo das condições">
             <li class="stat-card tooltip-host" tabindex="0" data-tip="Média das temperaturas medidas agora nas quatro subprefeituras monitoradas.">
                 <div class="stat-icon temp" aria-hidden="true"><svg class="i"><use href="#i-thermometer"></use></svg></div>
                 <div class="stat-body"><div class="stat-label tooltip-trigger">Temperatura média</div><div class="stat-value" id="statTemp">—<span class="unit">°C</span></div></div>
             </li>
-            <li class="stat-card tooltip-host" tabindex="0" data-tip="Maior chuva registrada na última hora entre as regiões monitoradas. É a chuva que define o nível de perigo no mapa.">
+            <li class="stat-card tooltip-host" tabindex="0" data-tip="Maior chuva registrada na última hora entre as regiões monitoradas.">
                 <div class="stat-icon rain" aria-hidden="true"><svg class="i"><use href="#i-cloud-rain"></use></svg></div>
                 <div class="stat-body"><div class="stat-label tooltip-trigger">Chuva máx. (mm/h)</div><div class="stat-value" id="statRain">—<span class="unit">mm/h</span></div></div>
-            </li>
-            <li class="stat-card tooltip-host" tabindex="0" data-tip="Região com o nível de perigo mais alto agora, pela chuva observada.">
-                <div class="stat-icon risk" aria-hidden="true"><svg class="i"><use href="#i-alert-triangle"></use></svg></div>
-                <div class="stat-body"><div class="stat-label tooltip-trigger">Região em alerta</div><div class="stat-value" id="statRegion">—</div></div>
             </li>
             <li class="stat-card tooltip-host" tabindex="0" data-tip="Horário da leitura dos dados climáticos. A atualização automática ocorre a cada 5 minutos.">
                 <div class="stat-icon clock" aria-hidden="true"><svg class="i"><use href="#i-clock"></use></svg></div>
@@ -173,6 +194,19 @@
         </ul>
 
         <main class="map-wrap">
+            <aside class="side-panel" id="sidePanel" aria-labelledby="sideTitle">
+                <div class="side-head">
+                    <h2 id="sideTitle">Regiões <span class="side-count" id="rlCount">0</span></h2>
+                    <span class="side-sort">por nível de perigo</span>
+                    <button type="button" class="side-close" id="sideClose" aria-label="Fechar lista de regiões">
+                        <svg class="i" aria-hidden="true"><use href="#i-x"></use></svg>
+                    </button>
+                </div>
+                <div class="side-scroll">
+                    <ul class="region-list" id="regionList" aria-label="Regiões ordenadas por nível de perigo"></ul>
+                    <section class="region-detail" id="regionDetail" aria-label="Detalhe da região"></section>
+                </div>
+            </aside>
             <div class="map-inner">
                 <div id="mapLoading" role="status">
                     <div class="load-logo" aria-hidden="true"><svg class="i"><use href="#i-cloud-rain"></use></svg></div>
@@ -208,15 +242,39 @@
                     </button>
                 </div>
 
+                <div class="timeline" id="timeline" data-kind="now">
+                    <button type="button" class="tl-play" id="tlPlay" aria-label="Animar a evolução das zonas" aria-pressed="false"></button>
+                    <div class="tl-track">
+                        <label class="sr-only" for="tlRange">Hora exibida no mapa, de 24 horas atrás a 48 horas à frente</label>
+                        <input type="range" id="tlRange" min="-24" max="48" step="1" value="0">
+                        <div class="tl-ticks" aria-hidden="true"><span style="left:0%">−24 h</span><span class="now" style="left:33.33%">agora</span><span style="left:66.67%">+24 h</span><span style="left:100%">+48 h</span></div>
+                    </div>
+                    <div class="tl-info">
+                        <output id="tlLabel" for="tlRange">Agora</output>
+                        <button type="button" class="tl-now" id="tlNow" disabled>Voltar para agora</button>
+                    </div>
+                    <p class="tl-hint" id="tlHint" hidden>A linha do tempo precisa da série horária do servidor (/weather/overview).</p>
+                </div>
+
                 <div class="map-legend" id="floodLegend">
-                    <h2 class="leg-title tooltip-trigger" tabindex="0" data-tip="Faixas de chuva (mm/h) usadas para colorir mapa, cartões e alertas. Critério CEMADEN / Defesa Civil.">Nível de perigo · chuva</h2>
+                    <button type="button" class="leg-toggle" id="legToggle" aria-expanded="true" aria-controls="legBody">Legenda</button>
+                    <div class="leg-body" id="legBody">
+                    <h2 class="leg-title tooltip-trigger" tabindex="0" data-tip="O nível é o pior entre a chuva observada (faixas abaixo, critério CEMADEN/Defesa Civil) e o índice de risco do modelo (25/50/75). O mesmo critério vale para mapa, lista, popups e alertas.">Nível de perigo</h2>
                     <ul class="leg-list">
                         <li class="leg-item"><span class="leg-swatch" style="background:var(--c-critical)"></span><span class="leg-sym" style="color:var(--c-critical-ink)" aria-hidden="true">⚠</span><div class="leg-info"><span class="leg-name">Crítico</span><span class="leg-range" id="leg-red">≥ 40 mm/h</span></div></li>
                         <li class="leg-item"><span class="leg-swatch" style="background:var(--c-high)"></span><span class="leg-sym" style="color:var(--c-high-ink)" aria-hidden="true">▲</span><div class="leg-info"><span class="leg-name">Alto</span><span class="leg-range" id="leg-orange">20–39 mm/h</span></div></li>
                         <li class="leg-item"><span class="leg-swatch" style="background:var(--c-medium)"></span><span class="leg-sym" style="color:var(--c-medium-ink)" aria-hidden="true">→</span><div class="leg-info"><span class="leg-name">Médio</span><span class="leg-range" id="leg-yellow">5–19 mm/h</span></div></li>
                         <li class="leg-item"><span class="leg-swatch" style="background:var(--c-low)"></span><span class="leg-sym" style="color:var(--c-low-ink)" aria-hidden="true">✓</span><div class="leg-info"><span class="leg-name">Baixo</span><span class="leg-range" id="leg-green">0–4 mm/h</span></div></li>
                     </ul>
+                    <p class="leg-sub">ou índice de risco do modelo ≥ 25 / 50 / 75</p>
+                    <ul class="leg-list leg-visual">
+                        <li class="leg-item"><span class="leg-fill solid"></span><span class="leg-name">observado</span></li>
+                        <li class="leg-item"><span class="leg-fill hatched"></span><span class="leg-name">previsto (hachurado)</span></li>
+                        <li class="leg-item"><span class="leg-line water"></span><span class="leg-name">curso d'água</span></li>
+                        <li class="leg-item"><span class="leg-line street"></span><span class="leg-name">via citada como alagável</span></li>
+                    </ul>
                     <p class="leg-note" id="legNote" hidden></p>
+                    </div>
                 </div>
 
                 <section class="control-panel" id="controlPanel" aria-label="Camadas do mapa">
@@ -234,6 +292,15 @@
                         <div class="lp-sect">
                             <button type="button" class="lp-row on" data-overlay="regions" role="switch" aria-checked="true"><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-hexagon"></use></svg></span><span class="lp-lbl">Perímetros</span></button>
                             <button type="button" class="lp-row on" data-overlay="flood_zones" role="switch" aria-checked="true"><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-waves"></use></svg></span><span class="lp-lbl">Zonas de perigo</span></button>
+                            <button type="button" class="lp-row on" data-overlay="hex" role="switch" aria-checked="true"><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-hexagon"></use></svg></span><span class="lp-lbl">Grade hexagonal <small>relevo, córregos e ocorrências</small></span></button>
+                        </div>
+                        <div class="lp-sect">
+                            <button type="button" class="lp-row on" data-layer="waterways" role="switch" aria-checked="true" hidden><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-droplet"></use></svg></span><span class="lp-lbl">Cursos d'água <small>OpenStreetMap</small></span></button>
+                            <button type="button" class="lp-row on" data-layer="flood_streets" role="switch" aria-checked="true" hidden><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-road"></use></svg></span><span class="lp-lbl">Vias alagáveis <small>exemplos do roadmap</small></span></button>
+                            <button type="button" class="lp-row" data-layer="geosampa" role="switch" aria-checked="false" hidden><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-alert-triangle"></use></svg></span><span class="lp-lbl">Áreas e ocorrências <small>GeoSampa / Prefeitura</small></span></button>
+                            <button type="button" class="lp-row" data-layer="support" role="switch" aria-checked="false" hidden><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-hospital"></use></svg></span><span class="lp-lbl">Pontos de apoio <small>hospitais e bombeiros</small></span></button>
+                            <button type="button" class="lp-row" data-layer="news_map" role="switch" aria-checked="false" hidden><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-newspaper"></use></svg></span><span class="lp-lbl">Notícias no mapa <small>pelo distrito citado</small></span></button>
+                            <button type="button" class="lp-row" data-layer="radar" role="switch" aria-checked="false" hidden><span class="toggle-sw"></span><span class="lp-ico" aria-hidden="true"><svg class="i"><use href="#i-radar"></use></svg></span><span class="lp-lbl">Radar de chuva <small>RainViewer</small></span></button>
                         </div>
                         <div class="threshold-sect" id="thresholdSect" hidden>
                             <h3 class="threshold-title">Limiares de chuva (mm/h) · operador</h3>

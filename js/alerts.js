@@ -11,7 +11,7 @@
  * Dados de exemplo nunca geram alerta nem histórico.
  */
 import { icon } from "./icons.js";
-import { LEVELS, dangerFromRain, levelRank } from "./risk.js";
+import { LEVELS, levelOf, levelRank } from "./risk.js";
 import { effectiveThresholds, store } from "./state.js";
 import { announce } from "./ui.js";
 import { $, escapeHtml, fmt1, fmtDateTime, storage, timeAgo } from "./util.js";
@@ -31,7 +31,7 @@ function currentAlert(state) {
     const thresholds = effectiveThresholds(state);
     let worst = null;
     for (const region of Object.values(state.regions)) {
-        const d = dangerFromRain(region.rain, thresholds);
+        const d = levelOf(region, thresholds);
         if (d.rank < ALERT_MIN_RANK) continue;
         if (!worst || d.rank > worst.danger.rank) worst = { danger: d, regions: [region] };
         else if (d.rank === worst.danger.rank) worst.regions.push(region);
@@ -54,13 +54,15 @@ export function reconcileDismissal(dismissed, alert) {
 
 function alertMessage(alert) {
     const names = alert.regions.map(r => `${r.short} (${fmt1(r.rain)} mm/h)`).join(", ");
+    const byRain = alert.danger.reason === "chuva observada na última hora";
+    const cause = byRain ? "chuva" : "chuva acumulada e previsão de chuva forte";
     if (alert.danger.level === "critical") {
         return {
             title: "ALERTA CRÍTICO:",
-            text: `chuva intensa em ${names}. Risco elevado de alagamento — evite áreas de várzea.`,
+            text: `${byRain ? "chuva intensa" : cause} em ${names}. Risco elevado de alagamento — evite áreas de várzea.`,
         };
     }
-    return { title: "ATENÇÃO:", text: `chuva forte em ${names}. Monitore as condições e evite áreas de risco.` };
+    return { title: "ATENÇÃO:", text: `${byRain ? "chuva forte" : cause} em ${names}. Monitore as condições e evite áreas de risco.` };
 }
 
 function renderStrip(state) {
@@ -104,7 +106,7 @@ function recordTransitions(state) {
     const entries = [];
     const now = Date.now();
     for (const region of Object.values(state.regions)) {
-        const to = dangerFromRain(region.rain, thresholds).level;
+        const to = levelOf(region, thresholds).level;
         const from = last[region.id] || null;
         if (from === to) continue;
         // primeira observação neste navegador: só vira entrada se já estiver em alerta

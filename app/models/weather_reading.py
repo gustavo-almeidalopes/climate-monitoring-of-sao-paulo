@@ -24,6 +24,8 @@ class WeatherReading(Base):
     pm10: Mapped[float | None] = mapped_column(Float, nullable=True)
     flood_risk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     source: Mapped[str] = mapped_column(String(40), nullable=False)
+    # "ml" | "heuristic" — origem do flood_risk_index (nula em leituras antigas)
+    risk_source: Mapped[str | None] = mapped_column(String(16), nullable=True)
     recorded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True, nullable=False
     )

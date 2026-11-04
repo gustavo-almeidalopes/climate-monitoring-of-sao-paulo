@@ -50,6 +50,7 @@ class StorageService:
         session: AsyncSession,
         reading: NormalizedCurrentWeather,
         flood_risk_index: int,
+        risk_source: str | None = None,
     ) -> WeatherReading:
         row = WeatherReading(
             region_code=reading.region_code,
@@ -61,6 +62,7 @@ class StorageService:
             pm25=reading.pm25,
             pm10=reading.pm10,
             flood_risk_index=flood_risk_index,
+            risk_source=risk_source,
             source=reading.source,
             recorded_at=reading.observed_at,
         )
@@ -75,6 +77,7 @@ class StorageService:
         region_code: str,
         readings: list[NormalizedForecastReading],
         risk_by_timestamp: dict[datetime, int],
+        risk_source_by_timestamp: dict[datetime, str] | None = None,
     ) -> None:
         now_utc = datetime.now(tz=timezone.utc)
         await session.execute(
@@ -96,6 +99,7 @@ class StorageService:
                     rain_mm=reading.rain_mm,
                     wind_kmh=reading.wind_kmh,
                     flood_risk_index=risk_by_timestamp.get(reading.forecast_for, 0),
+                    risk_source=(risk_source_by_timestamp or {}).get(reading.forecast_for),
                     source=reading.source,
                     generated_at=now_utc,
                 )

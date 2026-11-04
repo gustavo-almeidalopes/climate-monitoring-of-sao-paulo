@@ -1,0 +1,58 @@
+name: Dados geográficos (fontes reais)
+
+# Coleta altitude (Copernicus DEM via Open-Meteo), cursos d'água, vias e pontos de apoio
+# (OpenStreetMap), monta a grade H3 da Zona Norte e sonda GeoSampa/CGE/RainViewer.
+# O resultado é versionado em data/geo/ com a procedência em data/geo/metadata.json.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "scripts/build_geodata.py"
+      - ".github/workflows/geodata.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: geodata-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install "httpx==0.28.1" "h3>=4,<5"
+
+      - name: Coletar e processar
+        run: |
+          set -o pipefail
+          python scripts/build_geodata.py --out data/geo --report docs/fase-2/fontes.md 2>&1 | tee geodata.log
+          { echo '```'; cat geodata.log; echo '```'; cat docs/fase-2/fontes.md; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: geodata
+          path: |
+            data/geo/
+            docs/fase-2/fontes.md
+            geodata.log
+
+      - name: Versionar dados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git add data/geo docs/fase-2/fontes.md
+          if git diff --cached --quiet; then echo "Sem mudanças"; exit 0; fi
+          git commit -m "Dados geográficos gerados a partir de fontes reais ($(date -u +%Y-%m-%dT%H:%MZ))"
+          git push

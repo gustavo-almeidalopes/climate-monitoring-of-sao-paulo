@@ -20,11 +20,12 @@ function readOperatorFlag() {
     return storage.get(OPERATOR_KEY, false, "session") === true;
 }
 
-function validCustom(value) {
+/** Limiares do operador mudam só a chuva; os cortes do índice de risco seguem os oficiais. */
+function validCustom(value, riskCuts) {
     if (!value || typeof value !== "object") return null;
     const { red, orange, yellow } = value;
     if (![red, orange, yellow].every(Number.isFinite)) return null;
-    return yellow < orange && orange < red ? { red, orange, yellow } : null;
+    return yellow < orange && orange < red ? { red, orange, yellow, riskCuts } : null;
 }
 
 function renderLegend([thresholds, official, operator, custom, source]) {
@@ -61,7 +62,15 @@ function syncSliderLabels() {
 }
 
 export function initOperator() {
-    store.set({ operator: readOperatorFlag(), customThresholds: validCustom(storage.get(CUSTOM_KEY, null)) });
+    store.set({
+        operator: readOperatorFlag(),
+        customThresholds: validCustom(storage.get(CUSTOM_KEY, null), store.get().officialThresholds.riskCuts),
+    });
+    // limiares oficiais (com os cortes do índice) chegam depois do servidor
+    store.subscribe(s => s.officialThresholds, official => {
+        const custom = store.get().customThresholds;
+        if (custom && custom.riskCuts !== official.riskCuts) store.set({ customThresholds: { ...custom, riskCuts: official.riskCuts } });
+    }, { immediate: false });
 
     store.subscribe(s => [s.operator, s.customThresholds, s.officialThresholds], ([operator, custom, official]) => {
         $("#thresholdSect").hidden = !operator;
@@ -84,11 +93,12 @@ export function initOperator() {
             red: Number($("#thrRed").value),
             orange: Number($("#thrOrange").value),
             yellow: Number($("#thrYellow").value),
-        });
+        }, store.get().officialThresholds.riskCuts);
         if (!custom) { showToast("Limiares inválidos: Médio < Alto < Crítico."); return; }
         const official = store.get().officialThresholds;
         const value = thresholdsDiffer(custom, official) ? custom : null;
-        if (value) storage.set(CUSTOM_KEY, value); else storage.remove(CUSTOM_KEY);
+        if (value) storage.set(CUSTOM_KEY, { red: value.red, orange: value.orange, yellow: value.yellow });
+        else storage.remove(CUSTOM_KEY);
         store.set({ customThresholds: value });
         showToast(value ? "Limiares locais aplicados neste navegador." : "Limiares iguais aos oficiais.");
     });

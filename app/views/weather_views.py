@@ -38,6 +38,10 @@ class CurrentRegionWeather(BaseModel):
     pm10: float | None = None
     source: str
     recorded_at: datetime
+    risk_source: str = "unknown"
+    level: str = "low"
+    level_label: str = "Baixo"
+    level_reason: str = ""
 
 
 class CurrentRegionsResponse(BaseModel):
@@ -53,6 +57,10 @@ class ForecastPoint(BaseModel):
     wind: float
     risk: int
     source: str
+    risk_source: str = "unknown"
+    level: str = "low"
+    level_label: str = "Baixo"
+    level_reason: str = ""
 
 
 class ForecastResponse(BaseModel):
@@ -70,6 +78,10 @@ class HistoryPoint(BaseModel):
     wind: float
     risk: int
     source: str
+    risk_source: str = "unknown"
+    level: str = "low"
+    level_label: str = "Baixo"
+    level_reason: str = ""
 
 
 class HistoryStats(BaseModel):
@@ -117,6 +129,55 @@ class ThresholdsResponse(BaseModel):
     orange_mm_h: float
     red_mm_h: float
     levels: list[dict]
+    # Cortes do índice de risco 0–100 usados no critério único (app/core/risk_levels.py).
+    risk_cuts: dict[str, int] = Field(default_factory=dict)
+
+
+class TrendOut(BaseModel):
+    direction: str
+    since: datetime | None = None
+    delta: float = 0.0
+
+
+class SeriesPoint(BaseModel):
+    t: datetime
+    kind: str
+    rain: float
+    risk: int
+    risk_source: str = "unknown"
+    level: str = "low"
+    level_label: str = "Baixo"
+    level_reason: str = ""
+
+
+class RecentPoint(BaseModel):
+    t: datetime
+    rain: float
+    risk: int
+
+
+class NowcastOut(BaseModel):
+    as_of: datetime
+    horizon_hours: int | None = None
+    heavy_rain_mm: float | None = None
+    heavy_rain_probability: float
+    heavy_rain_alert: bool
+    expected_rain_next_mm: float
+
+
+class OverviewRegion(CurrentRegionWeather):
+    series: list[SeriesPoint]
+    recent: list[RecentPoint]
+    trend: dict[str, TrendOut]
+    nowcast: NowcastOut | None = None
+
+
+class OverviewResponse(BaseModel):
+    generated_at: datetime
+    updated_at: datetime
+    thresholds: ThresholdsResponse
+    model: dict
+    regions: dict[str, OverviewRegion]
 
 
 class ApiInfoResponse(BaseModel):

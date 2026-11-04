@@ -46,13 +46,23 @@ export function initUi() {
     $("#toastClose").addEventListener("click", hideToast);
     $("#btnRetryMap").addEventListener("click", () => window.location.reload());
 
-    // Painel de camadas: recolhido por padrão no celular para não cobrir o mapa.
+    // Painel de camadas: recolhido por padrão (exceto em telas muito largas) para não cobrir o mapa.
     const panel = $("#controlPanel");
     const toggle = $("#cpToggle");
     const setCollapsed = collapsed => {
         panel.classList.toggle("collapsed", collapsed);
         toggle.setAttribute("aria-expanded", String(!collapsed));
     };
-    setCollapsed(window.matchMedia("(max-width: 768px)").matches);
+    setCollapsed(!window.matchMedia("(min-width: 1600px)").matches);
     toggle.addEventListener("click", () => setCollapsed(!panel.classList.contains("collapsed")));
+
+    // Legenda: recolhível; começa fechada no celular para não cobrir o mapa.
+    const legend = $("#floodLegend");
+    const legToggle = $("#legToggle");
+    const setLegend = open => {
+        legend.classList.toggle("collapsed", !open);
+        legToggle.setAttribute("aria-expanded", String(open));
+    };
+    setLegend(!window.matchMedia("(max-width: 768px)").matches);
+    legToggle.addEventListener("click", () => setLegend(legend.classList.contains("collapsed")));
 }

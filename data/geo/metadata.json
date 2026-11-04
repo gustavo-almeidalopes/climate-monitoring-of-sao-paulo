@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-11-04T12:29:22+00:00",
+  "h3_resolution": 9,
+  "sources": {
+    "distritos": {
+      "url": "https://raw.githubusercontent.com/codigourbano/distritos-sp/master/distritos-sp.geojson",
+      "origem": "GeoSampa (SMDU/PMSP) via codigourbano/distritos-sp",
+      "uso": "apenas para selecionar as células e atribuir distrito/região"
+    },
+    "altitude": {
+      "fonte": "open-meteo",
+      "dataset": "Copernicus DEM GLO-90 (90 m) via Open-Meteo Elevation API",
+      "licenca": "CC BY 4.0 (Open-Meteo); © DLR e.V. 2010-2014 e © Airbus Defence and Space GmbH 2014-2018, fornecido no âmbito do COPERNICUS pela União Europeia e ESA"
+    },
+    "cursos_dagua": {
+      "consulta": "Overpass API, waterway=river|stream|canal|drain|ditch",
+      "licenca": "© colaboradores do OpenStreetMap — ODbL 1.0 (https://www.openstreetmap.org/copyright)"
+    },
+    "vias": {
+      "consulta": "Overpass API, highway com nome Marginal Tietê, Avenida Braz Leme",
+      "licenca": "© colaboradores do OpenStreetMap — ODbL 1.0 (https://www.openstreetmap.org/copyright)"
+    },
+    "pontos_de_apoio": {
+      "consulta": "Overpass API, amenity=hospital|fire_station",
+      "licenca": "© colaboradores do OpenStreetMap — ODbL 1.0 (https://www.openstreetmap.org/copyright)"
+    },
+    "geosampa": {
+      "wfs": "https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/ows",
+      "camadas": {
+        "geoportal:risco_ocorrencia_alagamento": 33,
+        "geoportal:risco_ocorrencia_inundacao": 18,
+        "geoportal:area_inundavel": 4,
+        "geoportal:risco_hidrologico": 89
+      }
+    }
+  },
+  "counts": {
+    "waterways": 691,
+    "flood_streets": 172,
+    "support_points": 68,
+    "cells": 1458
+  },
+  "notes": [],
+  "susceptibility_formula": "Índice relativo 0..1 de suscetibilidade a alagamento, por célula (EXPERIMENTAL).\n\n    - terreno baixo: média de (a) quão baixa é a célula na área monitorada e (b) quão abaixo\n      está da vizinhança imediata (anel H3 k=2) — fundos de vale acumulam água;\n    - proximidade de curso d'água: exp(-d / 300 m).\n    - histórico: ocorrências de alagamento registradas pela Prefeitura (GeoSampa,\n      risco_ocorrencia_alagamento) na célula e vizinhas (anel k=1), normalizado por log.\n    Sem histórico: s = 0,5 * terreno_baixo + 0,5 * proximidade.\n    Com histórico: s = 0,35 * terreno_baixo + 0,35 * proximidade + 0,30 * histórico."
+}

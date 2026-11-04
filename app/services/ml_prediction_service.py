@@ -76,6 +76,10 @@ class MLPredictionService:
         return self._model.is_loaded
 
     @property
+    def model_metadata(self) -> dict:
+        return dict(self._model.metadata) if self.model_available else {}
+
+    @property
     def training_running(self) -> bool:
         return self._train_lock.locked()
 

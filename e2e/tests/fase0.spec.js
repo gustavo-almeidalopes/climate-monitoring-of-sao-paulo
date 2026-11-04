@@ -249,7 +249,8 @@ test.describe("fundação", () => {
 
     test("textos relativos de idade do dado", async ({ page }) => {
         await open(page, { current: currentPayload({}, new Date(Date.now() - 7 * 60_000)) });
-        await expect(page.locator("#statUpdated")).toContainText("há 7 min");
+        await expect(page.locator("#statUpdated")).toContainText("7 min atrás");
+        await expect(page.locator("#verdictDetail")).toContainText("Dado de 7 min atrás");
     });
 });
 
