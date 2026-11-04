@@ -2,16 +2,21 @@
  * Ponto de entrada do front-end do ClimaSP (módulos ES nativos, sem build).
  *
  * Fluxo de dados: weather.js grava no store → cada módulo assina a fatia de
- * estado que exibe (mapa, cartões, alertas, banner, legenda, busca) e se
- * redesenha sozinho. Não há chamadas de render manuais entre módulos.
+ * estado que exibe (veredito, lista, detalhe, mapa, alertas, banner, legenda,
+ * busca, linha do tempo) e se redesenha sozinho. Não há chamadas de render
+ * manuais entre módulos.
  */
 import { initAlerts } from "./alerts.js";
+import { initGeolocate } from "./geolocate.js";
+import { initLayers } from "./layers.js";
 import { initMap } from "./map.js";
 import { initNews } from "./news.js";
 import { initOperator } from "./operator.js";
+import { initRegionList } from "./regionlist.js";
 import { initSearch } from "./search.js";
 import { initStatus } from "./status.js";
 import { initTheme } from "./theme.js";
+import { initTimeline } from "./timeline.js";
 import { initTooltips } from "./tooltips.js";
 import { initUi, setLoadingState, showMapError } from "./ui.js";
 import { initAutoRefresh, loadThresholds, loadWeather } from "./weather.js";
@@ -25,6 +30,8 @@ async function start() {
     initAlerts();
     initOperator();
     initNews();
+    initRegionList();
+    initTimeline();
 
     setLoadingState("weather");
     await loadThresholds();
@@ -37,7 +44,9 @@ async function start() {
     }
     setLoadingState("map");
     const mapApi = initMap();
-    initSearch(mapApi);
+    const { placePin } = initSearch(mapApi);
+    initGeolocate(mapApi.map, placePin);
+    initLayers(mapApi.map);
 }
 
 start().catch(err => {

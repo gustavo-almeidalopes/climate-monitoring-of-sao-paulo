@@ -31,7 +31,10 @@ const SAMPLE_VALUES = Object.freeze({
 export function sampleRegions() {
     const out = {};
     for (const [id, meta] of Object.entries(REGION_META)) {
-        out[id] = { ...meta, ...SAMPLE_VALUES[id], recordedAt: null, prevRisk: undefined, prevRain: undefined, isSample: true };
+        out[id] = {
+            ...meta, ...SAMPLE_VALUES[id], riskSource: "sample", recordedAt: null, series: [], recent: [],
+            trend: null, nowcast: null, prevRisk: undefined, prevRain: undefined, isSample: true,
+        };
     }
     return out;
 }

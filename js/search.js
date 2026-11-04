@@ -134,7 +134,20 @@ export function initSearch({ map, locate }) {
         const state = store.get();
         const place = locate(current.lat, current.lng);
         const region = place ? state.regions[place.regionId] || null : null;
-        return searchPopup({ ...current, place, region, thresholds: effectiveThresholds(state), now: state.now });
+        return searchPopup({ ...current, place, region, thresholds: effectiveThresholds(state), now: state.now, model: state.model });
+    }
+
+    /** Põe (ou move) o pino com o popup de risco do ponto. Usado pela busca e por "minha localização". */
+    function placePin(point, { zoom = 15, extra = null } = {}) {
+        current = point;
+        if (pin) map.removeLayer(pin);
+        if (extra) map.removeLayer(extra);
+        pin = L.marker([point.lat, point.lng], { icon: pinIcon, title: point.title, alt: point.title })
+            .addTo(map)
+            .bindPopup(popupHtml(), { maxWidth: 330 })
+            .openPopup();
+        map.flyTo([point.lat, point.lng], zoom, { duration: 1.2 });
+        return pin;
     }
 
     // O pino acompanha as atualizações de dados, sem nova busca.
@@ -164,14 +177,8 @@ export function initSearch({ map, locate }) {
             const lng = parseFloat(data[0].lon);
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast("Endereço não encontrado em SP."); return; }
             const address = String(data[0].display_name || q);
-            current = { title: address.split(",")[0], address, lat, lng };
-            if (pin) map.removeLayer(pin);
-            pin = L.marker([lat, lng], { icon: pinIcon, title: current.title, alt: current.title })
-                .addTo(map)
-                .bindPopup(popupHtml(), { maxWidth: 320 })
-                .openPopup();
+            placePin({ title: address.split(",")[0], address, lat, lng });
             SearchHistory.add(q);
-            map.flyTo([lat, lng], 15, { duration: 1.2 });
         } catch (err) {
             console.warn("Falha na busca:", err);
             showToast("Erro de conexão com o serviço de endereços (Nominatim).");
@@ -184,4 +191,5 @@ export function initSearch({ map, locate }) {
 
     const suggestions = initSuggestions(doSearch);
     $("#searchBtn").addEventListener("click", doSearch);
+    return { placePin };
 }

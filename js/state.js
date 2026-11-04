@@ -1,7 +1,7 @@
 /* Estado global da aplicação: uma única fonte da verdade para todos os módulos. */
 import { createStore } from "./store.js";
 
-export const DEFAULT_THRESHOLDS = Object.freeze({ red: 40, orange: 20, yellow: 5 });
+export const DEFAULT_THRESHOLDS = Object.freeze({ red: 40, orange: 20, yellow: 5, riskCuts: { medium: 25, high: 50, critical: 75 } });
 
 export const store = createStore({
     theme: document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark",
@@ -14,6 +14,18 @@ export const store = createStore({
     regions: {},
     /** Momento da leitura (servidor), em ms. */
     updatedAt: null,
+    /** true quando o backend serviu /overview (séries, tendência e nowcast disponíveis). */
+    hasSeries: false,
+    /** Resumo e qualidade do modelo de ML ({ available, precision, recall, ... }). */
+    model: { available: false },
+    /** O que mudou desde a leitura anterior: { ST: { rain: true, level: true } }. */
+    changes: {},
+    changesAt: 0,
+
+    /** Região aberta no painel de detalhe (id) ou null. */
+    selectedRegion: null,
+    /** Deslocamento da linha do tempo do mapa, em horas (0 = agora; −24…+48). */
+    timeOffset: 0,
 
     officialThresholds: DEFAULT_THRESHOLDS,
     /** Limiares locais do modo operador (só valem com o modo ligado). */
