@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-04T12:29:22+00:00",
+  "generated_at": "2026-11-04T12:43:08+00:00",
   "h3_resolution": 9,
   "sources": {
     "distritos": {
@@ -30,14 +30,21 @@
         "geoportal:risco_ocorrencia_alagamento": 33,
         "geoportal:risco_ocorrencia_inundacao": 18,
         "geoportal:area_inundavel": 4,
-        "geoportal:risco_hidrologico": 89
+        "geoportal:risco_hidrologico": 89,
+        "geoportal:reservatorio_amortecimento": 19
       }
+    },
+    "cobertura": {
+      "servico": "OSRM (router.project-osrm.org), perfil carro, sem trânsito",
+      "licenca": "rotas sobre dados © colaboradores do OpenStreetMap (ODbL); serviço público de demonstração",
+      "bases": "data/geo/example-bases.json — bases das equipes de EXEMPLO"
     }
   },
   "counts": {
     "waterways": 691,
     "flood_streets": 172,
     "support_points": 68,
+    "coverage_bases": 21,
     "cells": 1458
   },
   "notes": [],
