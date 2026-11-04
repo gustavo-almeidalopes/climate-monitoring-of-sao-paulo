@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.deps import (
     close_singletons,
@@ -115,3 +116,18 @@ async def service_error_handler(_: Request, exc: ServiceError) -> JSONResponse:
 @app.get("/")
 async def root() -> FileResponse:
     return FileResponse(str(BASE_DIR / "index.html"), media_type="text/html")
+
+
+# Front-end estático (o mesmo publicado na Vercel): folha de estilo, configuração
+# e módulos ES. Rotas aditivas — nenhuma rota da API muda.
+@app.get("/styles.css", include_in_schema=False)
+async def frontend_styles() -> FileResponse:
+    return FileResponse(str(BASE_DIR / "styles.css"), media_type="text/css")
+
+
+@app.get("/config.js", include_in_schema=False)
+async def frontend_config() -> FileResponse:
+    return FileResponse(str(BASE_DIR / "config.js"), media_type="text/javascript")
+
+
+app.mount("/js", StaticFiles(directory=str(BASE_DIR / "js")), name="frontend-js")
