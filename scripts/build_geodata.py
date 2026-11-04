@@ -42,7 +42,8 @@ CKAN_SEARCH = "https://dados.prefeitura.sp.gov.br/api/3/action/package_search"
 GEOSAMPA_LAYERS = (
     "geoportal:risco_ocorrencia_alagamento",
     "geoportal:risco_ocorrencia_inundacao",
-    "geoportal:mancha_inundacao_25",
+    # geoportal:mancha_inundacao_25 fica de fora: no recorte da Zona Norte passa de 20 mil feições
+    # (arquivo truncado e >10 MB); precisa de simplificação antes de ser exibida.
     "geoportal:area_inundavel",
     "geoportal:risco_hidrologico",
 )
