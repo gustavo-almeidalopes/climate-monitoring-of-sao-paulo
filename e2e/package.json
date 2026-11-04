@@ -1,0 +1,15 @@
+{
+  "name": "climasp-e2e",
+  "private": true,
+  "description": "Testes ponta a ponta (Playwright + axe) do front-end do ClimaSP",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "screenshots": "playwright test --grep @screenshot"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@playwright/test": "1.63.0",
+    "leaflet": "^1.9.4"
+  }
+}
