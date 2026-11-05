@@ -1,7 +1,7 @@
 /* Gaveta de notícias de alagamento (RSS coletado pelo backend). */
 import { api } from "./api.js";
 import { icon } from "./icons.js";
-import { $, $$, escapeHtml, timeAgo } from "./util.js";
+import { $, $$, escapeHtml, stripEmoji, timeAgo } from "./util.js";
 
 const PAGE = 15;
 let articles = [];
@@ -18,12 +18,12 @@ const relevanceLabel = score => (score >= 6 ? "Alta relevância" : score >= 3 ? 
 
 function card(a) {
     const rc = relevanceClass(a.relevance_score);
-    const raw = a.summary || "";
+    const raw = stripEmoji(a.summary);
     const summary = raw ? escapeHtml(raw.slice(0, 120)) + (raw.length > 120 ? "…" : "") : "";
     const url = /^https?:\/\//i.test(a.url || "") ? a.url : "#";
     return `<a class="news-card rel-${rc}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
-        <div class="news-source-row"><span class="news-source-dot"></span><span class="news-source">${escapeHtml(a.source)}</span></div>
-        <div class="news-title">${escapeHtml(a.title)}</div>
+        <div class="news-source-row"><span class="news-source-dot"></span><span class="news-source">${escapeHtml(stripEmoji(a.source))}</span></div>
+        <div class="news-title">${escapeHtml(stripEmoji(a.title))}</div>
         ${summary ? `<div class="news-summary">${summary}</div>` : ""}
         <div class="news-footer-row"><span class="news-time">${timeAgo(a.published_at || a.scraped_at)}</span>
         <span class="news-pill ${rc}">${relevanceLabel(a.relevance_score)}</span>

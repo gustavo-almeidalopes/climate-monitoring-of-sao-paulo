@@ -4,7 +4,7 @@
 source "$(dirname "$0")/common.sh"
 
 PROBLEMS=0
-problem() { fail "$1"; [ -n "${2:-}" ] && info "   → $2"; PROBLEMS=$((PROBLEMS + 1)); }
+problem() { fail "$1"; [ -n "${2:-}" ] && info "   como resolver: $2"; PROBLEMS=$((PROBLEMS + 1)); }
 
 echo "== Sistema"
 if [ "$(uname -s)" != "Darwin" ]; then

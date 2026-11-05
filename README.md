@@ -137,10 +137,10 @@ para piloto; em produção, troque por login individual.
   deslocamento, em ocorrência, indisponível). **São dados de EXEMPLO (fictícios)** até haver
   integração com os sistemas reais — rotulados em todo lugar. As bases ficam em instalações reais
   do OpenStreetMap (quartéis e hospitais) ou no centro de cada subprefeitura.
-- **3 equipes mais rápidas**: "Escolher ponto no mapa" → tempo de chegada **por ruas** (OSRM, carro,
+- **3 equipes mais rápidas**: "Escolher ponto no mapa" mostra o tempo de chegada **por ruas** (OSRM, carro,
   sem trânsito), com rotas alternativas que evitam células em nível Crítico quando custam até 50%
   a mais; trechos críticos são destacados. Sem OSRM, aparece "estimativa em linha reta".
-- **Despacho e ocorrências**: abrir → equipe designada → no local → resolvida, com linha do tempo.
+- **Despacho e ocorrências**: abrir, equipe designada, no local e resolvida, com linha do tempo.
 - **Cobertura (isócronas 5/10/15 min)**: minutos de cada base até cada célula da grade, calculados
   no CI (`data/geo/coverage.json`); células acima de 15 min aparecem hachuradas (buracos).
 - **Pré-posicionamento**: quando há chuva forte prevista (próximas 3 h) ou alerta do modelo numa

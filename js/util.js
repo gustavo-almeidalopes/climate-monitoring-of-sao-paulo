@@ -9,6 +9,15 @@ export function escapeHtml(value) {
     })[c]);
 }
 
+/**
+ * Remove emojis e pictogramas de texto vindo de fora (títulos e resumos de RSS),
+ * para a interface seguir só com texto e ícones do sprite. Acentos e pontuação ficam.
+ */
+const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{25A0}-\u{25FF}\u{2190}-\u{21FF}\u{2022}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu;
+export function stripEmoji(value) {
+    return String(value == null ? "" : value).replace(EMOJI_RE, "").replace(/\s{2,}/g, " ").trim();
+}
+
 export function debounce(fn, delay) {
     let timeoutId;
     return function debounced(...args) {

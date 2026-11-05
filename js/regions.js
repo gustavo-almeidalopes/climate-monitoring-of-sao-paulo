@@ -13,7 +13,7 @@ export const REGION_META = Object.freeze({
     MG: { id: "MG", name: "Subprefeitura Vila Maria/Vila Guilherme", short: "Vila Maria", lat: -23.51, lng: -46.585 },
 });
 
-/** Distrito (nome normalizado) → subprefeitura. */
+/** Distrito (nome normalizado) -> subprefeitura. */
 export const DISTRICT_TO_REGION = Object.freeze({
     "CASA VERDE": "CV", CACHOEIRINHA: "CV", LIMAO: "CV",
     SANTANA: "ST", TUCURUVI: "ST", MANDAQUI: "ST",

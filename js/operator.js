@@ -7,7 +7,7 @@
  * com o modo ligado; o público sempre vê os limiares oficiais do servidor.
  */
 import { effectiveThresholds, store, thresholdsDiffer } from "./state.js";
-import { showToast } from "./ui.js";
+import { paintRange, showToast } from "./ui.js";
 import { $, storage } from "./util.js";
 
 const OPERATOR_KEY = "climasp_operator";
@@ -52,6 +52,7 @@ function syncSliders(thresholds) {
     $("#thrRed").value = thresholds.red;
     $("#thrOrange").value = thresholds.orange;
     $("#thrYellow").value = thresholds.yellow;
+    for (const id of ["thrRed", "thrOrange", "thrYellow"]) paintRange($(`#${id}`));
     syncSliderLabels();
 }
 

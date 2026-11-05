@@ -5,6 +5,7 @@
  */
 import { icon } from "./icons.js";
 import { store } from "./state.js";
+import { paintRange } from "./ui.js";
 import { $, prefersReducedMotion } from "./util.js";
 
 const MIN = -24;
@@ -58,6 +59,7 @@ export function initTimeline() {
 
     store.subscribe(s => [s.timeOffset, s.now], ([offset, clock]) => {
         range.value = String(offset);
+        paintRange(range);
         const text = label(offset, clock);
         out.textContent = text;
         range.setAttribute("aria-valuetext", text);

@@ -60,13 +60,13 @@ async def run(years: int, ingest: bool) -> None:
         if ingest:
             print(f"\n[1/3] Coletando {years} ano(s) de histórico horário (Open-Meteo/ERA5)...")
             summary = await ml.ingest_history(session, years=years)
-            print(f"  Janela da reanálise: {summary['archive_window'][0]} → {summary['archive_window'][1]}")
+            print(f"  Janela da reanálise: {summary['archive_window'][0]} a {summary['archive_window'][1]}")
             for code, info in summary["regions"].items():
                 print(f"  {code}: {info['hours_upserted']:,} horas gravadas")
         coverage = await ml.observations.coverage(session)
         print("\n  Cobertura no banco:")
         for row in coverage:
-            print(f"   {row['region']:<3} {row['source']:<20} {row['hours']:>7,} h  {row['start']} → {row['end']}")
+            print(f"   {row['region']:<3} {row['source']:<20} {row['hours']:>7,} h  {row['start']} a {row['end']}")
 
         print("\n[2/3] Treinando (divisão temporal + baselines)...")
         meta = await ml.train(session, years=years, ingest=False, trigger="cli")
@@ -74,8 +74,8 @@ async def run(years: int, ingest: bool) -> None:
     m = meta["metrics"]
     b = m["baseline"]
     print(f"\n[3/3] Modelo {meta['version']} — alvo: {meta['target']}")
-    print(f"  Dados: {meta['samples']:,} horas ({meta['data_start'][:10]} → {meta['data_end'][:10]})")
-    print(f"  Teste (período mais recente): {m['test_period']['start'][:10]} → {m['test_period']['end'][:10]}")
+    print(f"  Dados: {meta['samples']:,} horas ({meta['data_start'][:10]} a {meta['data_end'][:10]})")
+    print(f"  Teste (período mais recente): {m['test_period']['start'][:10]} a {m['test_period']['end'][:10]}")
     print(f"  Taxa de eventos: treino {m['train_positive_rate']:.2%} | teste {m['test_positive_rate']:.2%}")
     print("\n  Métrica               Modelo    Persistência  Climatologia")
     print(f"  ROC-AUC               {_fmt(m['roc_auc'])}    {_fmt(b['persistence_roc_auc'])}        0.5000")

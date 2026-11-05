@@ -33,10 +33,10 @@ def test_level_from_risk_cuts(risk, expected):
 
 
 def test_unified_level_is_the_worst_of_rain_and_model_risk():
-    # chuva fraca, mas acumulado/modelo alto → sobe pelo risco
+    # chuva fraca, mas acumulado/modelo alto: sobe pelo risco
     assert unified_level(3.0, 80, "ml")["level"] == "critical"
     assert "risco combinado" in unified_level(3.0, 80, "ml")["reason"]
-    # chuva forte, risco baixo → vale a chuva
+    # chuva forte, risco baixo: vale a chuva
     assert unified_level(25.0, 10, "ml") == {"level": "high", "label": "Alto", "reason": "chuva observada na última hora"}
 
 

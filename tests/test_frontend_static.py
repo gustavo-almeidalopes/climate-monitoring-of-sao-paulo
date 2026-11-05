@@ -58,3 +58,31 @@ def test_api_routes_unchanged(client: TestClient) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert (body["yellow_mm_h"], body["orange_mm_h"], body["red_mm_h"]) == (5.0, 20.0, 40.0)
+
+
+# Emojis e glifos Unicode usados como ícone (alerta, setas, triângulos, marcas, bolinhas).
+_EMOJI = re.compile(
+    "[\U0001F000-\U0001FAFF☀-➿⬀-⯿■-◿←-⇿•️]"
+)
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["index.html", "styles.css", "config.js", *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "js").glob("*.js"))],
+)
+def test_frontend_sem_emojis(path: str) -> None:
+    """Interface só com texto e ícones SVG do sprite: nenhum emoji no código do front-end."""
+    text = (ROOT / path).read_text(encoding="utf-8")
+    found = sorted({m.group() for m in _EMOJI.finditer(text)})
+    assert not found, f"{path}: {found}"
+
+
+@pytest.mark.parametrize("path", ["app", "scripts"])
+def test_backend_e_scripts_sem_emojis(path: str) -> None:
+    """Mensagens do servidor e dos scripts (inclusive os do Simulador iOS) sem emojis."""
+    allowed = {"scripts/build_geodata.py"}  # gera docs/fase-2/fontes.md; alterar dispara nova coleta
+    for file in sorted((ROOT / path).rglob("*")):
+        if file.suffix not in {".py", ".sh"} or file.relative_to(ROOT).as_posix() in allowed:
+            continue
+        found = sorted({m.group() for m in _EMOJI.finditer(file.read_text(encoding="utf-8"))})
+        assert not found, f"{file.relative_to(ROOT)}: {found}"
