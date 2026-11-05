@@ -42,7 +42,24 @@ export function announce(message) {
     requestAnimationFrame(() => { node.textContent = message; });
 }
 
+/**
+ * Controle deslizante no estilo iOS: a parte já percorrida do trilho fica na cor de destaque.
+ * O navegador não pinta isso sozinho, então a fração vai numa variável CSS (--fill).
+ * Chame depois de mudar `value` por código; mudanças do usuário são tratadas em initUi.
+ */
+export function paintRange(input) {
+    if (!input) return;
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const pct = max > min ? ((Number(input.value) - min) / (max - min)) * 100 : 0;
+    input.style.setProperty("--fill", `${Math.min(100, Math.max(0, pct))}%`);
+}
+
 export function initUi() {
+    document.querySelectorAll('input[type="range"]').forEach(paintRange);
+    document.addEventListener("input", e => {
+        if (e.target instanceof HTMLInputElement && e.target.type === "range") paintRange(e.target);
+    });
     $("#toastClose").addEventListener("click", hideToast);
     $("#btnRetryMap").addEventListener("click", () => window.location.reload());
 

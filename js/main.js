@@ -1,7 +1,7 @@
 /*
  * Ponto de entrada do front-end do ClimaSP (módulos ES nativos, sem build).
  *
- * Fluxo de dados: weather.js grava no store → cada módulo assina a fatia de
+ * Fluxo de dados: weather.js grava no store e cada módulo assina a fatia de
  * estado que exibe (veredito, lista, detalhe, mapa, alertas, banner, legenda,
  * busca, linha do tempo) e se redesenha sozinho. Não há chamadas de render
  * manuais entre módulos.

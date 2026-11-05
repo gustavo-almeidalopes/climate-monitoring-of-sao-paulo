@@ -527,6 +527,8 @@ export function initOps(api) {
     const showTab = () => {
         const visible = store.get().operator || !!token || !!store.get().opsRole;
         $("#tabOps").hidden = !visible;
+        // com duas abas, vira controle segmentado; com uma só, título grande
+        $(".side-tabs").classList.toggle("segmented", visible);
         if (!visible && store.get().sideTab === "ops") setTab("regions");
     };
     store.subscribe(s => [s.operator, s.opsRole], showTab);

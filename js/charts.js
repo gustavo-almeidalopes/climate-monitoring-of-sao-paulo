@@ -106,7 +106,7 @@ export function riskLine(series, { now = Date.now(), cuts }) {
     for (const p of inRange) {
         const start = !prev || p.t - prev.t > 1.5 * HOUR || prev.kind !== p.kind;
         if (start && prev && prev.kind !== p.kind && p.t - prev.t <= 1.5 * HOUR) {
-            segs[p.kind] += `M${x(prev.t).toFixed(1)},${y(prev.risk).toFixed(1)}`; // costura observado→previsto
+            segs[p.kind] += `M${x(prev.t).toFixed(1)},${y(prev.risk).toFixed(1)}`; // costura entre observado e previsto
             segs[p.kind] += `L${x(p.t).toFixed(1)},${y(p.risk).toFixed(1)}`;
         } else {
             segs[p.kind] += `${start ? "M" : "L"}${x(p.t).toFixed(1)},${y(p.risk).toFixed(1)}`;

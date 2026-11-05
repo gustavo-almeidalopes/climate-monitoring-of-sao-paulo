@@ -10,7 +10,7 @@
 import { api } from "./api.js";
 import { clusterLayer, clusterPin, svgPin } from "./cluster.js";
 import { REGION_META, districtLabel } from "./regions.js";
-import { $$, escapeHtml, fmtClock, normalizeName, timeAgo } from "./util.js";
+import { $$, escapeHtml, fmtClock, normalizeName, stripEmoji, timeAgo } from "./util.js";
 
 const L = window.L;
 const DATA = "data/geo/";
@@ -59,7 +59,7 @@ function waterPopup(p) {
         <div class="pu-note">© colaboradores do OpenStreetMap (ODbL).</div></div>`;
 }
 
-/** "2026-01-25Z" → "25/01/2026" (datas do GeoSampa). */
+/** "2026-01-25Z" vira "25/01/2026" (datas do GeoSampa). */
 function fmtDay(value) {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ""));
     return m ? `${m[3]}/${m[2]}/${m[1]}` : String(value || "");
@@ -200,7 +200,7 @@ export function initLayers(map) {
         for (const a of data.articles || []) {
             for (const name of districtMentioned(`${a.title} ${a.summary || ""}`, names)) {
                 const c = centroids[name];
-                points.push({ lat: c.lat, lng: c.lng, kind: "news", title: a.title, source: a.source, url: a.url,
+                points.push({ lat: c.lat, lng: c.lng, kind: "news", title: stripEmoji(a.title), source: stripEmoji(a.source), url: a.url,
                     when: a.published_at || a.scraped_at, district: districtLabel(name) });
             }
         }

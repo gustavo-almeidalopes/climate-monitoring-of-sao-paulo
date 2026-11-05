@@ -16,7 +16,7 @@ def combine_flood_risk(
       (40 mm/h = nível vermelho CEMADEN; 60 mm/3h e 100 mm/24h saturam drenagem e solo);
     - componente previsto: probabilidade do modelo de chuva forte nas próximas horas.
 
-    risco = 1 - (1 - observado) * (1 - previsto)  → nunca menor que nenhum dos dois.
+    risco = 1 - (1 - observado) * (1 - previsto), ou seja, nunca menor que nenhum dos dois.
     """
     observed = max(
         max(rain_1h, 0.0) / RED_MM_H,

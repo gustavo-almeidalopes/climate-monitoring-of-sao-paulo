@@ -35,7 +35,7 @@ def _hour(dt: datetime) -> datetime:
 
 
 class MLPredictionService:
-    """Pipeline de ML com dados reais: ingestão → treino → inferência.
+    """Pipeline de ML com dados reais: ingestão, treino e inferência.
 
     1. Ingestão: baixa a série horária histórica real (Open-Meteo Archive/ERA5) de cada região
        e mantém as últimas horas atualizadas (Forecast API com `past_days`). Tudo é gravado em

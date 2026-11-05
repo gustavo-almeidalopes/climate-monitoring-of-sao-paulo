@@ -10,7 +10,11 @@ espelhado em `js/risk.js`.
 - Não inventar dados geográficos ou de equipes: fonte real verificada (registrar em
   `data/geo/metadata.json`/README) ou dado de exemplo explicitamente rotulado como fictício.
 - Mudanças de API são aditivas; não quebrar endpoints existentes.
-- Acessibilidade WCAG 2.1 AA nos dois temas; nunca depender só de cor (símbolos ⚠ ▲ → ✓).
+- Acessibilidade WCAG 2.1 AA nos dois temas; nunca depender só de cor: o nível aparece sempre por escrito
+  (Baixo/Médio/Alto/Crítico) ao lado do ponto colorido. Sem emojis nem glifos Unicode como ícone
+  (triângulos de alerta, setas, marcas de seleção, bolinhas); ícones são SVG do sprite em `index.html`, no traço do SF Symbols.
+- Estilo Apple (HIG): fonte do sistema (SF), azul do sistema como destaque, materiais translúcidos,
+  controle segmentado, interruptores e controles deslizantes do iOS. Tokens em `styles.css`.
 - Funcionar em 360 px sem rolagem horizontal.
 
 ## Fluxo de trabalho com o Simulador iOS (no Mac)
@@ -30,8 +34,8 @@ O app roda no Safari de um iPhone no Simulador iOS. Para cada alteração:
 6. **Corrigir** o que aparecer e repetir; antes de concluir, `scripts/ios/test.sh`
    (pytest + Playwright, incluindo iPhone WebKit) para regressões.
 
-Primeira vez no Mac: `scripts/ios/doctor.sh` (diagnóstico) → `scripts/ios/setup.sh` (instala só o
-que falta) → `scripts/ios/run.sh`. Credenciais de operação de desenvolvimento ficam em `.env.dev`
+Primeira vez no Mac: `scripts/ios/doctor.sh` (diagnóstico), depois `scripts/ios/setup.sh` (instala só o
+que falta) e `scripts/ios/run.sh`. Credenciais de operação de desenvolvimento ficam em `.env.dev`
 (gerado pelo `run.sh`, fora do git); abra `http://localhost:8000/?dev=1&operador=1`.
 
 ## Comandos úteis

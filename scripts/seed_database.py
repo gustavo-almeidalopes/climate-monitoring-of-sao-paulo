@@ -310,7 +310,7 @@ async def seed(days: int, db_url: str) -> None:
         await session.commit()
         print(f"  {news_inserted} artigo(s) inserido(s).")
 
-    print("\n✓ Seed concluído com sucesso!")
+    print("\nSeed concluído com sucesso.")
     print(f"  Banco pronto em: {db_url.replace('sqlite+aiosqlite:///', '')}")
     print("\nPróximos passos:")
     print("  1. Inicie o servidor: uvicorn app.main:app --host 0.0.0.0 --port 8000")

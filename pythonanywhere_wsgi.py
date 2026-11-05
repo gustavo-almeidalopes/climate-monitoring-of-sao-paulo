@@ -12,7 +12,7 @@ import sys
 import os
 
 # ── 1. Caminho do projeto ─────────────────────────────────────────────────────
-SEU_USUARIO = "SEU_USUARIO"  # ← ALTERE AQUI
+SEU_USUARIO = "SEU_USUARIO"  # ALTERE AQUI
 PROJECT_HOME = f"/home/{SEU_USUARIO}/climate-monitoring-of-sao-paulo-main"
 
 if PROJECT_HOME not in sys.path:
@@ -30,7 +30,7 @@ os.chdir(PROJECT_HOME)  # garante que caminhos relativos funcionem
 from dotenv import load_dotenv
 load_dotenv(os.path.join(PROJECT_HOME, ".env"))
 
-# ── 4. Aplicação FastAPI → adaptador ASGI→WSGI ────────────────────────────────
+# ── 4. Aplicação FastAPI e adaptador ASGI para WSGI ────────────────────────────────
 from a2wsgi import ASGIMiddleware
 from app.main import app
 

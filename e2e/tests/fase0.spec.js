@@ -103,7 +103,7 @@ test.describe("alertas com memória (item 5)", () => {
         const s = scenario({ ST: { rain: 45 } });
         await open(page, { current: s.current });
         await page.locator("#alertClose").click();
-        s.values = { ST: { rain: 25 } }; // Crítico → Alto: segue fechado
+        s.values = { ST: { rain: 25 } }; // de Crítico para Alto: segue fechado
         await refresh(page);
         await expect(page.locator("#alertStrip")).toBeHidden();
         s.values = { ST: { rain: 2 } }; // passa
@@ -237,7 +237,7 @@ test.describe("fundação", () => {
     for (const [name, opts] of [["offline", { apiDown: true }], ["online com alerta", { current: currentPayload({ ST: { rain: 25, risk: 70 }, CV: { rain: 6 } }) }]]) {
         test(`sem emojis nem glifos de nível na interface · ${name}`, async ({ page }) => {
             await open(page, opts);
-            // Emojis (🌧️ 🛰️ 📰 …) e glifos usados como ícone (⚠ ▲ ▼ ✓ → ▶ •): o nível é cor + texto,
+            // Emojis e glifos Unicode usados como ícone (alerta, setas, triângulos, marcas, bolinhas): o nível é cor + texto,
             // os ícones são SVG do sprite.
             const text = await page.evaluate(() => document.body.innerText);
             expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{25A0}-\u{25FF}\u{2190}-\u{21FF}\u{2022}\u{FE0F}]/u);

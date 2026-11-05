@@ -219,7 +219,7 @@ const kmBetween = (a, b) => {
 
 /**
  * API de operação simulada (estado em memória) + OSRM simulado.
- * Credenciais: "op-teste" → operador, "gestor-teste" → gestor. `configured: false` → 503.
+ * Credenciais: "op-teste" é operador, "gestor-teste" é gestor; com `configured: false`, 503.
  */
 export async function mockOps(page, { configured = true, osrmDown = false } = {}) {
     const now = () => new Date().toISOString();

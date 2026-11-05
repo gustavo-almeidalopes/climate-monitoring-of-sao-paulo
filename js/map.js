@@ -146,7 +146,7 @@ export function initMap() {
     const outlines = [];      // { id, layer }
     const hexCells = [];      // { props, layer }
     let suscCut = 0.66;       // recalculado: percentil 90 da suscetibilidade da grade
-    const cellLevelNow = new Map(); // h3 → nível da célula AGORA (para rotas que evitam zona crítica)
+    const cellLevelNow = new Map(); // h3 -> nível da célula AGORA (para rotas que evitam zona crítica)
     const cellIndex = [];           // { h3, lat, lng, region, district, susc, nearest_stream, dist_stream_m }
     const cellBuckets = new Map();  // grade grosseira para achar a célula de um ponto
     const labels = {};

@@ -3,7 +3,7 @@
 
    Linguagem visual: superfícies neutras, tipografia do sistema, separadores
    finos, sombras suaves e pouca decoração. Só o nível de perigo tem cor forte
-   (verde → ouro → laranja → carmim, validada para daltonismo); o nível sempre
+   (verde, ouro, laranja e carmim, validada para daltonismo); o nível sempre
    aparece também por escrito ("Baixo", "Alto"…), nunca só pela cor.
    ===================================================================== */
 
@@ -1552,8 +1552,9 @@ html.theme-switching *::after {
 }
 .tl-ticks {
     position: absolute;
-    left: 8px;
-    right: 8px;
+    /* metade do botão do controle (24 px): os rótulos ficam sob o centro do botão */
+    left: 12px;
+    right: 12px;
     bottom: 0;
     height: 12px;
 }
@@ -2850,10 +2851,13 @@ body.is-stale .stat-value {
         visibility: hidden;
         transition: transform var(--dur-med) var(--ease), visibility 0s linear var(--dur-med);
         z-index: 1500;
+        /* enquanto desliza para fora, toques passam direto para o mapa */
+        pointer-events: none;
     }
     .side-panel.open {
         transform: none;
         visibility: visible;
+        pointer-events: auto;
         transition: transform var(--dur-med) var(--ease);
     }
     .side-panel::before {
@@ -3226,3 +3230,194 @@ body.is-stale .stat-value {
     .header-logo .logo-text { display: none; }
     .header { gap: var(--space-2); }
 }
+
+/* =====================================================================
+   Acabamento no estilo Apple (Human Interface Guidelines)
+   Materiais translúcidos, controle segmentado, controles deslizantes e
+   interruptores do iOS, cor de destaque nos botões da barra, realce ao toque
+   e tipografia SF com espaçamento óptico. O nível de perigo continua sempre
+   escrito por extenso; nada aqui depende só de cor.
+   ===================================================================== */
+:root {
+    /* preenchimentos do sistema (systemFill / secondarySystemFill) */
+    --fill-1: rgba(120, 120, 128, 0.36);
+    --fill-2: rgba(118, 118, 128, 0.24);
+    --seg-thumb: #636366;
+    --thumb-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.24), 0 6px 13px rgba(0, 0, 0, 0.24);
+    --hairline: 0.5px solid rgba(255, 255, 255, 0.14);
+    --press: rgba(255, 255, 255, 0.12);
+}
+[data-theme="light"] {
+    --fill-1: rgba(120, 120, 128, 0.2);
+    --fill-2: rgba(118, 118, 128, 0.12);
+    --seg-thumb: #FFFFFF;
+    --thumb-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.12), 0 6px 13px rgba(0, 0, 0, 0.12);
+    --hairline: 0.5px solid rgba(60, 60, 67, 0.18);
+    --press: rgba(0, 0, 0, 0.08);
+}
+
+button,
+a,
+input,
+select,
+label {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- tipografia: espaçamento óptico do SF ---------- */
+.verdict-title {
+    letter-spacing: -0.015em;
+}
+.stat-value,
+.rl-rain,
+.side-count {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+/* ---------- materiais sobre o mapa: borda de meio pixel, como no iOS ---------- */
+.map-search,
+.control-panel,
+.map-legend,
+.timeline,
+.search-suggestions,
+.leaflet-bar {
+    border: var(--hairline);
+}
+
+/* ---------- barra superior: botões na cor de destaque ---------- */
+.header .icon-btn,
+.header .refresh-btn .i {
+    color: var(--accent-text);
+}
+.header .icon-btn:hover {
+    color: var(--accent-text);
+}
+
+/* botão de buscar: ação principal, preenchido na cor de destaque */
+.srch-btn {
+    background: var(--accent);
+    color: #fff;
+}
+
+/* ---------- controle segmentado (Regiões | Operação) ---------- */
+.side-tabs.segmented {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 9px;
+    background: var(--fill-2);
+}
+.side-tabs.segmented .side-tab {
+    height: 30px;
+    padding: 0 var(--space-2);
+    border-radius: 7px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: none;
+    transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.side-tabs.segmented .side-tab.active {
+    background: var(--seg-thumb);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04);
+}
+.side-tabs.segmented .side-count {
+    font-size: inherit;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+/* uma aba só: título grande, como nas listas do iOS */
+.side-tabs:not(.segmented) .side-tab {
+    height: auto;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    cursor: default;
+}
+.side-tabs:not(.segmented) .side-count {
+    font-size: inherit;
+}
+
+/* ---------- linhas de lista: realce ao toque ---------- */
+.region-list .rl-row:active,
+.lp-row:active {
+    background: var(--press);
+}
+
+/* ---------- interruptor do iOS ---------- */
+.toggle-sw {
+    width: 42px;
+    height: 26px;
+    background: var(--fill-1);
+}
+.toggle-sw::after {
+    width: 22px;
+    height: 22px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 3px 1px rgba(0, 0, 0, 0.06);
+}
+.lp-row.on .toggle-sw::after {
+    transform: translateX(16px);
+}
+
+/* ---------- controle deslizante do iOS (trilho fino + botão branco) ---------- */
+input[type="range"] {
+    --fill: 50%;
+    --range-color: var(--accent);
+    -webkit-appearance: none;
+    appearance: none;
+    height: 28px;
+    background: transparent;
+    cursor: pointer;
+    touch-action: pan-y;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--range-color) var(--fill), var(--fill-1) var(--fill));
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    margin-top: -10px;
+    border-radius: 50%;
+    background: #fff;
+    border: 0.5px solid rgba(0, 0, 0, 0.06);
+    box-shadow: var(--thumb-shadow);
+    transition: transform var(--dur-fast) var(--ease);
+}
+input[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.08);
+}
+input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--fill-1);
+}
+input[type="range"]::-moz-range-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--range-color);
+}
+input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border: 0.5px solid rgba(0, 0, 0, 0.06);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: var(--thumb-shadow);
+}
+input[type="range"]:focus-visible {
+    border-radius: var(--radius-full);
+}
+.thr-slider.red { --range-color: var(--c-critical); }
+.thr-slider.orange { --range-color: var(--c-high); }
+.thr-slider.yellow { --range-color: var(--c-medium); }

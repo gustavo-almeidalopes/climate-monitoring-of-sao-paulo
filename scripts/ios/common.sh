@@ -20,10 +20,10 @@ else
     C_OK=""; C_WARN=""; C_FAIL=""; C_DIM=""; C_END=""
 fi
 
-ok()   { printf '%s✓%s %s\n' "$C_OK" "$C_END" "$*"; }
-warn() { printf '%s!%s %s\n' "$C_WARN" "$C_END" "$*"; }
-fail() { printf '%s✗%s %s\n' "$C_FAIL" "$C_END" "$*"; }
-info() { printf '%s·%s %s\n' "$C_DIM" "$C_END" "$*"; }
+ok()   { printf '%sok%s    %s\n' "$C_OK" "$C_END" "$*"; }
+warn() { printf '%saviso%s %s\n' "$C_WARN" "$C_END" "$*"; }
+fail() { printf '%serro%s  %s\n' "$C_FAIL" "$C_END" "$*"; }
+info() { printf '%s-%s     %s\n' "$C_DIM" "$C_END" "$*"; }
 die()  { fail "$*"; exit 1; }
 
 require_macos() {
