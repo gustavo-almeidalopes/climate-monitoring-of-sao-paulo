@@ -1,0 +1,65 @@
+# Backend Python (clima, previsão, ML, notícias) + painel estático.
+# Uma réplica: o banco local é SQLite (volume). Para escalar, mova DATABASE_URL para Postgres.
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector: { app: api }
+  ports: [{ port: 8000, targetPort: 8000, name: http }]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: api-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: { storage: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api }
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001 }
+      containers:
+        - name: api
+          image: climasp-api
+          ports: [{ containerPort: 8000, name: http }]
+          envFrom:
+            - configMapRef: { name: climasp-config }
+          env:
+            - { name: OPERATOR_TOKEN, valueFrom: { secretKeyRef: { name: climasp-secrets, key: OPERATOR_TOKEN } } }
+            - { name: MANAGER_TOKEN, valueFrom: { secretKeyRef: { name: climasp-secrets, key: MANAGER_TOKEN } } }
+            - { name: VAPID_PUBLIC_KEY, valueFrom: { secretKeyRef: { name: climasp-secrets, key: VAPID_PUBLIC_KEY } } }
+            - { name: VAPID_PRIVATE_KEY, valueFrom: { secretKeyRef: { name: climasp-secrets, key: VAPID_PRIVATE_KEY } } }
+            - { name: VAPID_SUBJECT, valueFrom: { secretKeyRef: { name: climasp-secrets, key: VAPID_SUBJECT } } }
+            - { name: WHATSAPP_TOKEN, valueFrom: { secretKeyRef: { name: climasp-secrets, key: WHATSAPP_TOKEN } } }
+            - { name: WHATSAPP_PHONE_NUMBER_ID, valueFrom: { secretKeyRef: { name: climasp-secrets, key: WHATSAPP_PHONE_NUMBER_ID } } }
+            - { name: WHATSAPP_VERIFY_TOKEN, valueFrom: { secretKeyRef: { name: climasp-secrets, key: WHATSAPP_VERIFY_TOKEN } } }
+            - { name: WHATSAPP_APP_SECRET, valueFrom: { secretKeyRef: { name: climasp-secrets, key: WHATSAPP_APP_SECRET } } }
+            - { name: DATABASE_URL, value: "sqlite+aiosqlite:////app/var/climasp.db" }
+          readinessProbe:
+            httpGet: { path: /api/v1/health, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/v1/health, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits: { memory: 2Gi }
+          volumeMounts:
+            - { name: data, mountPath: /app/var }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: api-data }

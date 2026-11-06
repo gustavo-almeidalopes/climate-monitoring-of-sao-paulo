@@ -38,6 +38,16 @@ jobs:
           cache-dependency-path: services/ops-java/pom.xml
       - run: mvn -B test
 
+  deploy-config:
+    # docker-compose.yml e manifestos Kubernetes (kustomize) bem formados; kubectl já vem no runner.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config -q
+      - run: cp deploy/secrets.env.example deploy/secrets.env && kubectl kustomize deploy > /tmp/climasp.yaml
+      - run: grep -c '^kind:' /tmp/climasp.yaml
+
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -1,0 +1,14 @@
+# Troque o host e a classe do ingress pelos do cluster; TLS via cert-manager ou certificado do órgão.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: climasp
+spec:
+  rules:
+    - host: climasp.example.gov.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: gateway, port: { number: 80 } }

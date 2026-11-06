@@ -1,0 +1,49 @@
+# PostgreSQL + PostGIS do serviço de operação. Para produção, prefira um Postgres gerenciado com
+# backup (aponte DATABASE_URL para ele e remova este arquivo do kustomization).
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  clusterIP: None
+  selector: { app: postgres }
+  ports: [{ port: 5432, name: pg }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgis/postgis:16-3.5-alpine
+          ports: [{ containerPort: 5432, name: pg }]
+          env:
+            - { name: POSTGRES_DB, value: climasp_ops }
+            - { name: POSTGRES_USER, value: climasp }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: climasp-secrets, key: POSTGRES_PASSWORD } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "climasp", "-d", "climasp_ops"] }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests: { storage: 5Gi }

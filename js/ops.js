@@ -9,7 +9,7 @@ import { ApiError, opsApi } from "./api.js";
 import { icon } from "./icons.js";
 import { forecastConcern, withinText } from "./insights.js";
 import { setDrawer } from "./regionlist.js";
-import { districtLabel } from "./regions.js";
+import { districtLabel, REGION_META } from "./regions.js";
 import { routes as osrmRoutes, pickRoute, travelTimes, estimateMinutes } from "./routing.js";
 import { effectiveThresholds, regionList, store } from "./state.js";
 import { showToast } from "./ui.js";
@@ -521,7 +521,7 @@ function renderPanel() {
     // despacho
     $("#opsCandidates").innerHTML = candidatesHtml(state.opsCandidates);
     $("#opsTargetInfo").textContent = state.opsTarget
-        ? `Ponto: ${state.opsTarget.place?.inside ? `distrito ${state.opsTarget.place.district}` : "fora da área monitorada"} (${state.opsTarget.lat.toFixed(4)}, ${state.opsTarget.lng.toFixed(4)})`
+        ? `Ponto: ${targetPlaceText(state.opsTarget.place)} (${state.opsTarget.lat.toFixed(4)}, ${state.opsTarget.lng.toFixed(4)})`
         : "";
     // ocorrências
     const active = incidents.filter(i => i.status !== "resolvida");
@@ -540,6 +540,14 @@ function renderPanel() {
     </li>`).join("");
     $("#opsTeamsNote").hidden = !teams.some(t => t.is_example);
     $("#opsReport").innerHTML = reportHtml(state.opsReport);
+}
+function targetPlaceText(place) {
+    if (!place?.inside)
+        return "fora da área monitorada";
+    if (place.district)
+        return `distrito ${place.district}`;
+    const meta = place.regionId ? REGION_META[place.regionId] : null;
+    return meta ? `perto de ${meta.short}` : "dentro da área monitorada";
 }
 /* ------------------------------------------------------------ inicialização */
 function setTab(tab) {

@@ -1,0 +1,3510 @@
+{
+ "components": {
+  "schemas": {
+   "AssignIn": {
+    "properties": {
+     "eta_minutes": {
+      "anyOf": [
+       {
+        "maximum": 600.0,
+        "minimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Eta Minutes"
+     },
+     "team_id": {
+      "title": "Team Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "team_id"
+    ],
+    "title": "AssignIn",
+    "type": "object"
+   },
+   "CurrentRegionWeather": {
+    "properties": {
+     "aqi": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Aqi"
+     },
+     "color": {
+      "title": "Color",
+      "type": "string"
+     },
+     "danger_color": {
+      "default": "#22c55e",
+      "title": "Danger Color",
+      "type": "string"
+     },
+     "danger_label": {
+      "default": "Baixo",
+      "title": "Danger Label",
+      "type": "string"
+     },
+     "danger_level": {
+      "default": "green",
+      "title": "Danger Level",
+      "type": "string"
+     },
+     "hum": {
+      "title": "Hum",
+      "type": "integer"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "lat": {
+      "title": "Lat",
+      "type": "number"
+     },
+     "level": {
+      "default": "low",
+      "title": "Level",
+      "type": "string"
+     },
+     "level_label": {
+      "default": "Baixo",
+      "title": "Level Label",
+      "type": "string"
+     },
+     "level_reason": {
+      "default": "",
+      "title": "Level Reason",
+      "type": "string"
+     },
+     "lng": {
+      "title": "Lng",
+      "type": "number"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "pm10": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pm10"
+     },
+     "pm25": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pm25"
+     },
+     "rain": {
+      "title": "Rain",
+      "type": "number"
+     },
+     "recorded_at": {
+      "format": "date-time",
+      "title": "Recorded At",
+      "type": "string"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "risk_source": {
+      "default": "unknown",
+      "title": "Risk Source",
+      "type": "string"
+     },
+     "short": {
+      "title": "Short",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     },
+     "temp": {
+      "title": "Temp",
+      "type": "number"
+     },
+     "wind": {
+      "title": "Wind",
+      "type": "number"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "short",
+     "color",
+     "lat",
+     "lng",
+     "temp",
+     "hum",
+     "rain",
+     "wind",
+     "risk",
+     "source",
+     "recorded_at"
+    ],
+    "title": "CurrentRegionWeather",
+    "type": "object"
+   },
+   "CurrentRegionsResponse": {
+    "properties": {
+     "regions": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/CurrentRegionWeather"
+      },
+      "title": "Regions",
+      "type": "object"
+     },
+     "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+     }
+    },
+    "required": [
+     "updated_at",
+     "regions"
+    ],
+    "title": "CurrentRegionsResponse",
+    "type": "object"
+   },
+   "DataHealth": {
+    "properties": {
+     "stale_regions": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Stale Regions",
+      "type": "array"
+     },
+     "total_regions": {
+      "title": "Total Regions",
+      "type": "integer"
+     },
+     "ttl_minutes": {
+      "title": "Ttl Minutes",
+      "type": "integer"
+     },
+     "updated_regions": {
+      "title": "Updated Regions",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "ttl_minutes",
+     "total_regions",
+     "updated_regions",
+     "stale_regions"
+    ],
+    "title": "DataHealth",
+    "type": "object"
+   },
+   "DatasetCoverage": {
+    "properties": {
+     "end": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "End"
+     },
+     "hours": {
+      "title": "Hours",
+      "type": "integer"
+     },
+     "region": {
+      "title": "Region",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     },
+     "start": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Start"
+     }
+    },
+    "required": [
+     "region",
+     "source",
+     "hours",
+     "start",
+     "end"
+    ],
+    "title": "DatasetCoverage",
+    "type": "object"
+   },
+   "DatasetResponse": {
+    "properties": {
+     "coverage": {
+      "items": {
+       "$ref": "#/components/schemas/DatasetCoverage"
+      },
+      "title": "Coverage",
+      "type": "array"
+     },
+     "total_hours": {
+      "title": "Total Hours",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "total_hours",
+     "coverage"
+    ],
+    "title": "DatasetResponse",
+    "type": "object"
+   },
+   "ForecastPoint": {
+    "properties": {
+     "forecast_for": {
+      "format": "date-time",
+      "title": "Forecast For",
+      "type": "string"
+     },
+     "hum": {
+      "title": "Hum",
+      "type": "integer"
+     },
+     "level": {
+      "default": "low",
+      "title": "Level",
+      "type": "string"
+     },
+     "level_label": {
+      "default": "Baixo",
+      "title": "Level Label",
+      "type": "string"
+     },
+     "level_reason": {
+      "default": "",
+      "title": "Level Reason",
+      "type": "string"
+     },
+     "rain": {
+      "title": "Rain",
+      "type": "number"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "risk_source": {
+      "default": "unknown",
+      "title": "Risk Source",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     },
+     "temp": {
+      "title": "Temp",
+      "type": "number"
+     },
+     "wind": {
+      "title": "Wind",
+      "type": "number"
+     }
+    },
+    "required": [
+     "forecast_for",
+     "temp",
+     "hum",
+     "rain",
+     "wind",
+     "risk",
+     "source"
+    ],
+    "title": "ForecastPoint",
+    "type": "object"
+   },
+   "ForecastResponse": {
+    "properties": {
+     "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+     },
+     "horizon_hours": {
+      "default": 48,
+      "title": "Horizon Hours",
+      "type": "integer"
+     },
+     "points": {
+      "items": {
+       "$ref": "#/components/schemas/ForecastPoint"
+      },
+      "title": "Points",
+      "type": "array"
+     },
+     "region": {
+      "$ref": "#/components/schemas/RegionOut"
+     }
+    },
+    "required": [
+     "region",
+     "generated_at",
+     "points"
+    ],
+    "title": "ForecastResponse",
+    "type": "object"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "title": "Detail",
+      "type": "array"
+     }
+    },
+    "title": "HTTPValidationError",
+    "type": "object"
+   },
+   "HealthResponse": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/DataHealth"
+     },
+     "database": {
+      "title": "Database",
+      "type": "string"
+     },
+     "scheduler": {
+      "$ref": "#/components/schemas/SchedulerHealth"
+     },
+     "sources": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/SourceHealth"
+      },
+      "title": "Sources",
+      "type": "object"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+     }
+    },
+    "required": [
+     "status",
+     "timestamp",
+     "database",
+     "sources",
+     "scheduler",
+     "data"
+    ],
+    "title": "HealthResponse",
+    "type": "object"
+   },
+   "HistoryPoint": {
+    "properties": {
+     "hum": {
+      "title": "Hum",
+      "type": "integer"
+     },
+     "level": {
+      "default": "low",
+      "title": "Level",
+      "type": "string"
+     },
+     "level_label": {
+      "default": "Baixo",
+      "title": "Level Label",
+      "type": "string"
+     },
+     "level_reason": {
+      "default": "",
+      "title": "Level Reason",
+      "type": "string"
+     },
+     "rain": {
+      "title": "Rain",
+      "type": "number"
+     },
+     "recorded_at": {
+      "format": "date-time",
+      "title": "Recorded At",
+      "type": "string"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "risk_source": {
+      "default": "unknown",
+      "title": "Risk Source",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     },
+     "temp": {
+      "title": "Temp",
+      "type": "number"
+     },
+     "wind": {
+      "title": "Wind",
+      "type": "number"
+     }
+    },
+    "required": [
+     "recorded_at",
+     "temp",
+     "hum",
+     "rain",
+     "wind",
+     "risk",
+     "source"
+    ],
+    "title": "HistoryPoint",
+    "type": "object"
+   },
+   "HistoryResponse": {
+    "properties": {
+     "days": {
+      "title": "Days",
+      "type": "integer"
+     },
+     "readings": {
+      "items": {
+       "$ref": "#/components/schemas/HistoryPoint"
+      },
+      "title": "Readings",
+      "type": "array"
+     },
+     "region": {
+      "$ref": "#/components/schemas/RegionOut"
+     },
+     "stats": {
+      "$ref": "#/components/schemas/HistoryStats"
+     }
+    },
+    "required": [
+     "region",
+     "days",
+     "stats",
+     "readings"
+    ],
+    "title": "HistoryResponse",
+    "type": "object"
+   },
+   "HistoryStats": {
+    "properties": {
+     "rain_total_mm": {
+      "title": "Rain Total Mm",
+      "type": "number"
+     },
+     "risk_avg": {
+      "title": "Risk Avg",
+      "type": "number"
+     },
+     "risk_max": {
+      "title": "Risk Max",
+      "type": "integer"
+     },
+     "risk_min": {
+      "title": "Risk Min",
+      "type": "integer"
+     },
+     "samples": {
+      "title": "Samples",
+      "type": "integer"
+     },
+     "temp_avg_c": {
+      "title": "Temp Avg C",
+      "type": "number"
+     }
+    },
+    "required": [
+     "samples",
+     "risk_min",
+     "risk_max",
+     "risk_avg",
+     "rain_total_mm",
+     "temp_avg_c"
+    ],
+    "title": "HistoryStats",
+    "type": "object"
+   },
+   "IncidentIn": {
+    "properties": {
+     "address": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Address",
+      "type": "string"
+     },
+     "description": {
+      "default": "",
+      "maxLength": 500,
+      "title": "Description",
+      "type": "string"
+     },
+     "kind": {
+      "default": "alagamento",
+      "maxLength": 30,
+      "title": "Kind",
+      "type": "string"
+     },
+     "lat": {
+      "maximum": 90.0,
+      "minimum": -90.0,
+      "title": "Lat",
+      "type": "number"
+     },
+     "lng": {
+      "maximum": 180.0,
+      "minimum": -180.0,
+      "title": "Lng",
+      "type": "number"
+     }
+    },
+    "required": [
+     "lat",
+     "lng"
+    ],
+    "title": "IncidentIn",
+    "type": "object"
+   },
+   "IncidentOut": {
+    "properties": {
+     "address": {
+      "title": "Address",
+      "type": "string"
+     },
+     "arrived_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Arrived At"
+     },
+     "assigned_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Assigned At"
+     },
+     "description": {
+      "title": "Description",
+      "type": "string"
+     },
+     "eta_minutes": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Eta Minutes"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "is_example": {
+      "title": "Is Example",
+      "type": "boolean"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "lat": {
+      "title": "Lat",
+      "type": "number"
+     },
+     "lng": {
+      "title": "Lng",
+      "type": "number"
+     },
+     "opened_at": {
+      "format": "date-time",
+      "title": "Opened At",
+      "type": "string"
+     },
+     "region": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Region"
+     },
+     "resolved_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Resolved At"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "team_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Team Id"
+     },
+     "timeline": {
+      "items": {
+       "$ref": "#/components/schemas/TimelineEvent"
+      },
+      "title": "Timeline",
+      "type": "array"
+     }
+    },
+    "required": [
+     "id",
+     "kind",
+     "description",
+     "address",
+     "lat",
+     "lng",
+     "region",
+     "status",
+     "team_id",
+     "eta_minutes",
+     "opened_at",
+     "assigned_at",
+     "arrived_at",
+     "resolved_at",
+     "is_example",
+     "timeline"
+    ],
+    "title": "IncidentOut",
+    "type": "object"
+   },
+   "MLStatusResponse": {
+    "properties": {
+     "feature_columns": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Feature Columns",
+      "type": "array"
+     },
+     "feature_importance": {
+      "additionalProperties": {
+       "type": "number"
+      },
+      "title": "Feature Importance",
+      "type": "object"
+     },
+     "last_sync_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Sync At"
+     },
+     "last_sync_error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Sync Error"
+     },
+     "model": {
+      "additionalProperties": true,
+      "title": "Model",
+      "type": "object"
+     },
+     "model_available": {
+      "title": "Model Available",
+      "type": "boolean"
+     },
+     "model_file_exists": {
+      "title": "Model File Exists",
+      "type": "boolean"
+     },
+     "model_path": {
+      "title": "Model Path",
+      "type": "string"
+     },
+     "sklearn_available": {
+      "title": "Sklearn Available",
+      "type": "boolean"
+     },
+     "train_metrics": {
+      "additionalProperties": true,
+      "title": "Train Metrics",
+      "type": "object"
+     },
+     "training_job": {
+      "additionalProperties": true,
+      "title": "Training Job",
+      "type": "object"
+     }
+    },
+    "required": [
+     "model_available",
+     "sklearn_available",
+     "model_path",
+     "model_file_exists",
+     "model",
+     "train_metrics",
+     "feature_importance",
+     "feature_columns",
+     "training_job",
+     "last_sync_at",
+     "last_sync_error"
+    ],
+    "title": "MLStatusResponse",
+    "type": "object"
+   },
+   "MeOut": {
+    "properties": {
+     "role": {
+      "title": "Role",
+      "type": "string"
+     }
+    },
+    "required": [
+     "role"
+    ],
+    "title": "MeOut",
+    "type": "object"
+   },
+   "MetricsResponse": {
+    "properties": {
+     "regions": {
+      "items": {
+       "$ref": "#/components/schemas/RegionMetrics"
+      },
+      "title": "Regions",
+      "type": "array"
+     },
+     "stale_regions": {
+      "title": "Stale Regions",
+      "type": "integer"
+     },
+     "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+     },
+     "total_regions": {
+      "title": "Total Regions",
+      "type": "integer"
+     },
+     "ttl_minutes": {
+      "title": "Ttl Minutes",
+      "type": "integer"
+     },
+     "updated_regions": {
+      "title": "Updated Regions",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "timestamp",
+     "ttl_minutes",
+     "total_regions",
+     "updated_regions",
+     "stale_regions",
+     "regions"
+    ],
+    "title": "MetricsResponse",
+    "type": "object"
+   },
+   "NewsArticleOut": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "matched_keywords": {
+      "default": [],
+      "items": {
+       "type": "string"
+      },
+      "title": "Matched Keywords",
+      "type": "array"
+     },
+     "published_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Published At"
+     },
+     "relevance_score": {
+      "title": "Relevance Score",
+      "type": "number"
+     },
+     "scraped_at": {
+      "format": "date-time",
+      "title": "Scraped At",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     },
+     "summary": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Summary"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "url": {
+      "title": "Url",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "url",
+     "source",
+     "scraped_at",
+     "relevance_score"
+    ],
+    "title": "NewsArticleOut",
+    "type": "object"
+   },
+   "NewsResponse": {
+    "properties": {
+     "articles": {
+      "items": {
+       "$ref": "#/components/schemas/NewsArticleOut"
+      },
+      "title": "Articles",
+      "type": "array"
+     },
+     "last_scraped_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Scraped At"
+     },
+     "total": {
+      "title": "Total",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "total",
+     "articles"
+    ],
+    "title": "NewsResponse",
+    "type": "object"
+   },
+   "NowcastOut": {
+    "properties": {
+     "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+     },
+     "expected_rain_next_mm": {
+      "title": "Expected Rain Next Mm",
+      "type": "number"
+     },
+     "heavy_rain_alert": {
+      "title": "Heavy Rain Alert",
+      "type": "boolean"
+     },
+     "heavy_rain_mm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Heavy Rain Mm"
+     },
+     "heavy_rain_probability": {
+      "title": "Heavy Rain Probability",
+      "type": "number"
+     },
+     "horizon_hours": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Horizon Hours"
+     }
+    },
+    "required": [
+     "as_of",
+     "heavy_rain_probability",
+     "heavy_rain_alert",
+     "expected_rain_next_mm"
+    ],
+    "title": "NowcastOut",
+    "type": "object"
+   },
+   "OverviewRegion": {
+    "properties": {
+     "aqi": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Aqi"
+     },
+     "color": {
+      "title": "Color",
+      "type": "string"
+     },
+     "danger_color": {
+      "default": "#22c55e",
+      "title": "Danger Color",
+      "type": "string"
+     },
+     "danger_label": {
+      "default": "Baixo",
+      "title": "Danger Label",
+      "type": "string"
+     },
+     "danger_level": {
+      "default": "green",
+      "title": "Danger Level",
+      "type": "string"
+     },
+     "hum": {
+      "title": "Hum",
+      "type": "integer"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "lat": {
+      "title": "Lat",
+      "type": "number"
+     },
+     "level": {
+      "default": "low",
+      "title": "Level",
+      "type": "string"
+     },
+     "level_label": {
+      "default": "Baixo",
+      "title": "Level Label",
+      "type": "string"
+     },
+     "level_reason": {
+      "default": "",
+      "title": "Level Reason",
+      "type": "string"
+     },
+     "lng": {
+      "title": "Lng",
+      "type": "number"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "nowcast": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/NowcastOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "pm10": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pm10"
+     },
+     "pm25": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pm25"
+     },
+     "rain": {
+      "title": "Rain",
+      "type": "number"
+     },
+     "recent": {
+      "items": {
+       "$ref": "#/components/schemas/RecentPoint"
+      },
+      "title": "Recent",
+      "type": "array"
+     },
+     "recorded_at": {
+      "format": "date-time",
+      "title": "Recorded At",
+      "type": "string"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "risk_source": {
+      "default": "unknown",
+      "title": "Risk Source",
+      "type": "string"
+     },
+     "series": {
+      "items": {
+       "$ref": "#/components/schemas/SeriesPoint"
+      },
+      "title": "Series",
+      "type": "array"
+     },
+     "short": {
+      "title": "Short",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     },
+     "temp": {
+      "title": "Temp",
+      "type": "number"
+     },
+     "trend": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/TrendOut"
+      },
+      "title": "Trend",
+      "type": "object"
+     },
+     "wind": {
+      "title": "Wind",
+      "type": "number"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "short",
+     "color",
+     "lat",
+     "lng",
+     "temp",
+     "hum",
+     "rain",
+     "wind",
+     "risk",
+     "source",
+     "recorded_at",
+     "series",
+     "recent",
+     "trend"
+    ],
+    "title": "OverviewRegion",
+    "type": "object"
+   },
+   "OverviewResponse": {
+    "properties": {
+     "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+     },
+     "model": {
+      "additionalProperties": true,
+      "title": "Model",
+      "type": "object"
+     },
+     "regions": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/OverviewRegion"
+      },
+      "title": "Regions",
+      "type": "object"
+     },
+     "thresholds": {
+      "$ref": "#/components/schemas/ThresholdsResponse"
+     },
+     "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+     }
+    },
+    "required": [
+     "generated_at",
+     "updated_at",
+     "thresholds",
+     "model",
+     "regions"
+    ],
+    "title": "OverviewResponse",
+    "type": "object"
+   },
+   "PredictionResponse": {
+    "properties": {
+     "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+     },
+     "decision_threshold": {
+      "title": "Decision Threshold",
+      "type": "number"
+     },
+     "expected_rain_next_mm": {
+      "title": "Expected Rain Next Mm",
+      "type": "number"
+     },
+     "heavy_rain_alert": {
+      "title": "Heavy Rain Alert",
+      "type": "boolean"
+     },
+     "heavy_rain_mm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Heavy Rain Mm"
+     },
+     "heavy_rain_probability": {
+      "title": "Heavy Rain Probability",
+      "type": "number"
+     },
+     "horizon_hours": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Horizon Hours"
+     },
+     "model_version": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Model Version"
+     },
+     "observed": {
+      "additionalProperties": true,
+      "title": "Observed",
+      "type": "object"
+     },
+     "region": {
+      "title": "Region",
+      "type": "string"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "timeline": {
+      "items": {
+       "$ref": "#/components/schemas/TimelinePoint"
+      },
+      "title": "Timeline",
+      "type": "array"
+     }
+    },
+    "required": [
+     "region",
+     "as_of",
+     "model_version",
+     "horizon_hours",
+     "heavy_rain_mm",
+     "heavy_rain_probability",
+     "heavy_rain_alert",
+     "decision_threshold",
+     "expected_rain_next_mm",
+     "observed",
+     "risk",
+     "timeline"
+    ],
+    "title": "PredictionResponse",
+    "type": "object"
+   },
+   "RecentPoint": {
+    "properties": {
+     "rain": {
+      "title": "Rain",
+      "type": "number"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "t": {
+      "format": "date-time",
+      "title": "T",
+      "type": "string"
+     }
+    },
+    "required": [
+     "t",
+     "rain",
+     "risk"
+    ],
+    "title": "RecentPoint",
+    "type": "object"
+   },
+   "RefreshResponse": {
+    "properties": {
+     "failed_regions": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Failed Regions",
+      "type": "array"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "refreshed_at": {
+      "format": "date-time",
+      "title": "Refreshed At",
+      "type": "string"
+     },
+     "regions_updated": {
+      "title": "Regions Updated",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "message",
+     "refreshed_at",
+     "regions_updated"
+    ],
+    "title": "RefreshResponse",
+    "type": "object"
+   },
+   "RegionMetrics": {
+    "properties": {
+     "age_minutes": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Age Minutes"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "last_recorded_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Recorded At"
+     },
+     "short": {
+      "title": "Short",
+      "type": "string"
+     },
+     "stale": {
+      "title": "Stale",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "short",
+     "stale"
+    ],
+    "title": "RegionMetrics",
+    "type": "object"
+   },
+   "RegionOut": {
+    "properties": {
+     "color": {
+      "title": "Color",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "lat": {
+      "title": "Lat",
+      "type": "number"
+     },
+     "lng": {
+      "title": "Lng",
+      "type": "number"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "short": {
+      "title": "Short",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "short",
+     "color",
+     "lat",
+     "lng"
+    ],
+    "title": "RegionOut",
+    "type": "object"
+   },
+   "RegionsResponse": {
+    "properties": {
+     "regions": {
+      "items": {
+       "$ref": "#/components/schemas/RegionOut"
+      },
+      "title": "Regions",
+      "type": "array"
+     }
+    },
+    "required": [
+     "regions"
+    ],
+    "title": "RegionsResponse",
+    "type": "object"
+   },
+   "ResolveIn": {
+    "properties": {
+     "note": {
+      "default": "",
+      "maxLength": 300,
+      "title": "Note",
+      "type": "string"
+     }
+    },
+    "title": "ResolveIn",
+    "type": "object"
+   },
+   "SchedulerHealth": {
+    "properties": {
+     "interval_minutes": {
+      "title": "Interval Minutes",
+      "type": "integer"
+     },
+     "last_error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Error"
+     },
+     "last_run_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Run At"
+     },
+     "last_success_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Success At"
+     },
+     "next_run_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Run At"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "status",
+     "interval_minutes"
+    ],
+    "title": "SchedulerHealth",
+    "type": "object"
+   },
+   "ScrapeResponse": {
+    "properties": {
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "new_articles": {
+      "title": "New Articles",
+      "type": "integer"
+     },
+     "sources_checked": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Sources Checked",
+      "type": "array"
+     }
+    },
+    "required": [
+     "message",
+     "new_articles",
+     "sources_checked"
+    ],
+    "title": "ScrapeResponse",
+    "type": "object"
+   },
+   "SeriesPoint": {
+    "properties": {
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "level": {
+      "default": "low",
+      "title": "Level",
+      "type": "string"
+     },
+     "level_label": {
+      "default": "Baixo",
+      "title": "Level Label",
+      "type": "string"
+     },
+     "level_reason": {
+      "default": "",
+      "title": "Level Reason",
+      "type": "string"
+     },
+     "rain": {
+      "title": "Rain",
+      "type": "number"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "risk_source": {
+      "default": "unknown",
+      "title": "Risk Source",
+      "type": "string"
+     },
+     "t": {
+      "format": "date-time",
+      "title": "T",
+      "type": "string"
+     }
+    },
+    "required": [
+     "t",
+     "kind",
+     "rain",
+     "risk"
+    ],
+    "title": "SeriesPoint",
+    "type": "object"
+   },
+   "SourceHealth": {
+    "properties": {
+     "last_error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Error"
+     },
+     "last_success_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Success At"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "status"
+    ],
+    "title": "SourceHealth",
+    "type": "object"
+   },
+   "TeamOut": {
+    "properties": {
+     "base_lat": {
+      "title": "Base Lat",
+      "type": "number"
+     },
+     "base_lng": {
+      "title": "Base Lng",
+      "type": "number"
+     },
+     "base_name": {
+      "title": "Base Name",
+      "type": "string"
+     },
+     "base_source": {
+      "title": "Base Source",
+      "type": "string"
+     },
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "is_example": {
+      "title": "Is Example",
+      "type": "boolean"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "lat": {
+      "title": "Lat",
+      "type": "number"
+     },
+     "lng": {
+      "title": "Lng",
+      "type": "number"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "updated_at": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Updated At"
+     }
+    },
+    "required": [
+     "id",
+     "code",
+     "name",
+     "kind",
+     "status",
+     "lat",
+     "lng",
+     "base_name",
+     "base_source",
+     "base_lat",
+     "base_lng",
+     "is_example",
+     "updated_at"
+    ],
+    "title": "TeamOut",
+    "type": "object"
+   },
+   "TeamPatch": {
+    "properties": {
+     "lat": {
+      "anyOf": [
+       {
+        "maximum": 90.0,
+        "minimum": -90.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Lat"
+     },
+     "lng": {
+      "anyOf": [
+       {
+        "maximum": 180.0,
+        "minimum": -180.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Lng"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     }
+    },
+    "title": "TeamPatch",
+    "type": "object"
+   },
+   "ThresholdsResponse": {
+    "properties": {
+     "levels": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Levels",
+      "type": "array"
+     },
+     "orange_mm_h": {
+      "title": "Orange Mm H",
+      "type": "number"
+     },
+     "red_mm_h": {
+      "title": "Red Mm H",
+      "type": "number"
+     },
+     "risk_cuts": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "title": "Risk Cuts",
+      "type": "object"
+     },
+     "yellow_mm_h": {
+      "title": "Yellow Mm H",
+      "type": "number"
+     }
+    },
+    "required": [
+     "yellow_mm_h",
+     "orange_mm_h",
+     "red_mm_h",
+     "levels"
+    ],
+    "title": "ThresholdsResponse",
+    "type": "object"
+   },
+   "TimelineEvent": {
+    "properties": {
+     "actor_role": {
+      "title": "Actor Role",
+      "type": "string"
+     },
+     "at": {
+      "format": "date-time",
+      "title": "At",
+      "type": "string"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "note": {
+      "default": "",
+      "title": "Note",
+      "type": "string"
+     },
+     "team_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Team Id"
+     }
+    },
+    "required": [
+     "at",
+     "kind",
+     "actor_role"
+    ],
+    "title": "TimelineEvent",
+    "type": "object"
+   },
+   "TimelinePoint": {
+    "properties": {
+     "expected_rain_next_mm": {
+      "title": "Expected Rain Next Mm",
+      "type": "number"
+     },
+     "heavy_rain_probability": {
+      "title": "Heavy Rain Probability",
+      "type": "number"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "rain_mm": {
+      "title": "Rain Mm",
+      "type": "number"
+     },
+     "risk": {
+      "title": "Risk",
+      "type": "integer"
+     },
+     "time": {
+      "format": "date-time",
+      "title": "Time",
+      "type": "string"
+     }
+    },
+    "required": [
+     "time",
+     "kind",
+     "rain_mm",
+     "heavy_rain_probability",
+     "expected_rain_next_mm",
+     "risk"
+    ],
+    "title": "TimelinePoint",
+    "type": "object"
+   },
+   "TrainResponse": {
+    "properties": {
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "metadata": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Metadata"
+     }
+    },
+    "required": [
+     "message"
+    ],
+    "title": "TrainResponse",
+    "type": "object"
+   },
+   "TrendOut": {
+    "properties": {
+     "delta": {
+      "default": 0.0,
+      "title": "Delta",
+      "type": "number"
+     },
+     "direction": {
+      "title": "Direction",
+      "type": "string"
+     },
+     "since": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Since"
+     }
+    },
+    "required": [
+     "direction"
+    ],
+    "title": "TrendOut",
+    "type": "object"
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "title": "Location",
+      "type": "array"
+     },
+     "msg": {
+      "title": "Message",
+      "type": "string"
+     },
+     "type": {
+      "title": "Error Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError",
+    "type": "object"
+   }
+  }
+ },
+ "info": {
+  "description": "Backend MVC de monitoramento climático e alagamentos em São Paulo.",
+  "title": "ClimaSP Backend",
+  "version": "1.0.0"
+ },
+ "openapi": "3.1.0",
+ "paths": {
+  "/": {
+   "get": {
+    "operationId": "root__get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Root"
+   }
+  },
+  "/api/v1/health": {
+   "get": {
+    "operationId": "healthcheck_api_v1_health_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HealthResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Healthcheck",
+    "tags": [
+     "Health"
+    ]
+   }
+  },
+  "/api/v1/ml/dataset": {
+   "get": {
+    "description": "Cobertura da série horária real armazenada (por região e fonte).",
+    "operationId": "ml_dataset_api_v1_ml_dataset_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DatasetResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Ml Dataset",
+    "tags": [
+     "Machine Learning"
+    ]
+   }
+  },
+  "/api/v1/ml/ingest": {
+   "post": {
+    "description": "Baixa (incrementalmente) o histórico horário real da Open-Meteo Archive e as horas recentes.",
+    "operationId": "ml_ingest_api_v1_ml_ingest_post",
+    "parameters": [
+     {
+      "description": "Anos de histórico ERA5 a garantir no banco",
+      "in": "query",
+      "name": "years",
+      "required": false,
+      "schema": {
+       "default": 3,
+       "description": "Anos de histórico ERA5 a garantir no banco",
+       "maximum": 10,
+       "minimum": 1,
+       "title": "Years",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Ml Ingest Api V1 Ml Ingest Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Ml Ingest",
+    "tags": [
+     "Machine Learning"
+    ]
+   }
+  },
+  "/api/v1/ml/predict/{region_id}": {
+   "get": {
+    "description": "Nowcast: probabilidade de chuva forte nas próximas horas, chuva esperada e risco 0–100.",
+    "operationId": "predict_region_api_v1_ml_predict__region_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "region_id",
+      "required": true,
+      "schema": {
+       "title": "Region Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PredictionResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Predict Region",
+    "tags": [
+     "Machine Learning"
+    ]
+   }
+  },
+  "/api/v1/ml/runs": {
+   "get": {
+    "description": "Histórico auditável das execuções de treino.",
+    "operationId": "ml_runs_api_v1_ml_runs_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 10,
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Ml Runs Api V1 Ml Runs Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Ml Runs",
+    "tags": [
+     "Machine Learning"
+    ]
+   }
+  },
+  "/api/v1/ml/status": {
+   "get": {
+    "description": "Estado do modelo: versão, período de dados, métricas vs. baselines e importância das features.",
+    "operationId": "ml_status_api_v1_ml_status_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MLStatusResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Ml Status",
+    "tags": [
+     "Machine Learning"
+    ]
+   }
+  },
+  "/api/v1/ml/train": {
+   "post": {
+    "description": "Dispara coleta + treino em background. Acompanhe em GET /ml/status e GET /ml/runs.",
+    "operationId": "train_model_api_v1_ml_train_post",
+    "parameters": [
+     {
+      "description": "Anos de histórico para treino",
+      "in": "query",
+      "name": "years",
+      "required": false,
+      "schema": {
+       "default": 3,
+       "description": "Anos de histórico para treino",
+       "maximum": 10,
+       "minimum": 1,
+       "title": "Years",
+       "type": "integer"
+      }
+     },
+     {
+      "description": "Coletar dados novos antes de treinar",
+      "in": "query",
+      "name": "ingest",
+      "required": false,
+      "schema": {
+       "default": true,
+       "description": "Coletar dados novos antes de treinar",
+       "title": "Ingest",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TrainResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Train Model",
+    "tags": [
+     "Machine Learning"
+    ]
+   }
+  },
+  "/api/v1/ml/train/sync": {
+   "post": {
+    "description": "Coleta + treino aguardando a conclusão (pode levar alguns minutos).",
+    "operationId": "train_model_sync_api_v1_ml_train_sync_post",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "years",
+      "required": false,
+      "schema": {
+       "default": 3,
+       "maximum": 10,
+       "minimum": 1,
+       "title": "Years",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "ingest",
+      "required": false,
+      "schema": {
+       "default": true,
+       "title": "Ingest",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TrainResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Train Model Sync",
+    "tags": [
+     "Machine Learning"
+    ]
+   }
+  },
+  "/api/v1/news/": {
+   "get": {
+    "operationId": "list_news_api_v1_news__get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     {
+      "description": "Horas retroativas para busca",
+      "in": "query",
+      "name": "hours",
+      "required": false,
+      "schema": {
+       "default": 48,
+       "description": "Horas retroativas para busca",
+       "maximum": 168,
+       "minimum": 1,
+       "title": "Hours",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "min_relevance",
+      "required": false,
+      "schema": {
+       "default": 1.0,
+       "maximum": 10.0,
+       "minimum": 0.0,
+       "title": "Min Relevance",
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/NewsResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List News",
+    "tags": [
+     "Notícias"
+    ]
+   }
+  },
+  "/api/v1/news/scrape": {
+   "post": {
+    "description": "Dispara raspagem manual das fontes de notícias RSS (G1 SP, Folha, UOL).",
+    "operationId": "scrape_news_api_v1_news_scrape_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ScrapeResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Scrape News",
+    "tags": [
+     "Notícias"
+    ]
+   }
+  },
+  "/api/v1/ops/incidents": {
+   "get": {
+    "operationId": "incidents_api_v1_ops_incidents_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "include_resolved",
+      "required": false,
+      "schema": {
+       "default": true,
+       "title": "Include Resolved",
+       "type": "boolean"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 100,
+       "maximum": 500,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/IncidentOut"
+         },
+         "title": "Response Incidents Api V1 Ops Incidents Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Incidents",
+    "tags": [
+     "Operação"
+    ]
+   },
+   "post": {
+    "operationId": "open_incident_api_v1_ops_incidents_post",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/IncidentIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IncidentOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Open Incident",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/incidents/{incident_id}/arrive": {
+   "post": {
+    "operationId": "arrive_api_v1_ops_incidents__incident_id__arrive_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "incident_id",
+      "required": true,
+      "schema": {
+       "title": "Incident Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IncidentOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Arrive",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/incidents/{incident_id}/assign": {
+   "post": {
+    "operationId": "assign_api_v1_ops_incidents__incident_id__assign_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "incident_id",
+      "required": true,
+      "schema": {
+       "title": "Incident Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AssignIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IncidentOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Assign",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/incidents/{incident_id}/resolve": {
+   "post": {
+    "operationId": "resolve_api_v1_ops_incidents__incident_id__resolve_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "incident_id",
+      "required": true,
+      "schema": {
+       "title": "Incident Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ResolveIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/IncidentOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Resolve",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/me": {
+   "get": {
+    "description": "Valida a credencial e devolve o perfil (operador ou gestor).",
+    "operationId": "me_api_v1_ops_me_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MeOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Me",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/report": {
+   "get": {
+    "description": "Relatório pós-evento: chuva acumulada, ocorrências, tempos de resposta e acerto do modelo.",
+    "operationId": "report_api_v1_ops_report_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "hours",
+      "required": false,
+      "schema": {
+       "default": 24,
+       "maximum": 720,
+       "minimum": 1,
+       "title": "Hours",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Report Api V1 Ops Report Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Report",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/report/context": {
+   "get": {
+    "description": "Chuva acumulada e acerto do modelo na janela (sem as ocorrências).\n\nUsado pelo serviço Java de operação para montar o relatório pós-evento.",
+    "operationId": "report_context_api_v1_ops_report_context_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "hours",
+      "required": false,
+      "schema": {
+       "default": 24,
+       "maximum": 720,
+       "minimum": 1,
+       "title": "Hours",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Report Context Api V1 Ops Report Context Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Report Context",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/teams": {
+   "get": {
+    "operationId": "teams_api_v1_ops_teams_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/TeamOut"
+         },
+         "title": "Response Teams Api V1 Ops Teams Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Teams",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/ops/teams/{team_id}": {
+   "patch": {
+    "operationId": "patch_team_api_v1_ops_teams__team_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "team_id",
+      "required": true,
+      "schema": {
+       "title": "Team Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TeamPatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TeamOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Patch Team",
+    "tags": [
+     "Operação"
+    ]
+   }
+  },
+  "/api/v1/weather/current": {
+   "get": {
+    "operationId": "current_all_regions_api_v1_weather_current_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "refresh_if_stale",
+      "required": false,
+      "schema": {
+       "default": true,
+       "title": "Refresh If Stale",
+       "type": "boolean"
+      }
+     },
+     {
+      "in": "query",
+      "name": "max_age_minutes",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 360,
+       "minimum": 1,
+       "title": "Max Age Minutes",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CurrentRegionsResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Current All Regions",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/current/{region_id}": {
+   "get": {
+    "operationId": "current_region_api_v1_weather_current__region_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "region_id",
+      "required": true,
+      "schema": {
+       "title": "Region Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "max_age_minutes",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 360,
+       "minimum": 1,
+       "title": "Max Age Minutes",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CurrentRegionWeather"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Current Region",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/forecast/{region_id}": {
+   "get": {
+    "operationId": "forecast_region_api_v1_weather_forecast__region_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "region_id",
+      "required": true,
+      "schema": {
+       "title": "Region Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "horizon_hours",
+      "required": false,
+      "schema": {
+       "default": 48,
+       "maximum": 72,
+       "minimum": 6,
+       "title": "Horizon Hours",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ForecastResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Forecast Region",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/history/{region_id}": {
+   "get": {
+    "operationId": "history_region_api_v1_weather_history__region_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "region_id",
+      "required": true,
+      "schema": {
+       "title": "Region Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "days",
+      "required": false,
+      "schema": {
+       "default": 7,
+       "maximum": 7,
+       "minimum": 1,
+       "title": "Days",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HistoryResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "History Region",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/metrics": {
+   "get": {
+    "operationId": "weather_metrics_api_v1_weather_metrics_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "max_age_minutes",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 360,
+       "minimum": 1,
+       "title": "Max Age Minutes",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MetricsResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Weather Metrics",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/overview": {
+   "get": {
+    "description": "Painel numa chamada: leitura atual com nível unificado, série horária −24 h…+48 h,\ntendência das últimas 6 h e nowcast do modelo de cada região (aditivo; não substitui\n/current, /forecast, /history nem /ml/predict).",
+    "operationId": "overview_api_v1_weather_overview_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "refresh_if_stale",
+      "required": false,
+      "schema": {
+       "default": true,
+       "title": "Refresh If Stale",
+       "type": "boolean"
+      }
+     },
+     {
+      "in": "query",
+      "name": "max_age_minutes",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 360,
+       "minimum": 1,
+       "title": "Max Age Minutes",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/OverviewResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Overview",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/refresh": {
+   "post": {
+    "operationId": "refresh_weather_api_v1_weather_refresh_post",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "force",
+      "required": false,
+      "schema": {
+       "default": true,
+       "title": "Force",
+       "type": "boolean"
+      }
+     },
+     {
+      "in": "query",
+      "name": "max_age_minutes",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 360,
+       "minimum": 1,
+       "title": "Max Age Minutes",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RefreshResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Refresh Weather",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/regions": {
+   "get": {
+    "operationId": "list_regions_api_v1_weather_regions_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RegionsResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "List Regions",
+    "tags": [
+     "Weather"
+    ]
+   }
+  },
+  "/api/v1/weather/thresholds": {
+   "get": {
+    "description": "Retorna os limiares de chuva (mm/h) para cada nível de perigo (CEMADEN / Defesa Civil SP)\ne os cortes do índice de risco usados no critério único de nível.",
+    "operationId": "get_thresholds_api_v1_weather_thresholds_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ThresholdsResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Get Thresholds",
+    "tags": [
+     "Weather"
+    ]
+   }
+  }
+ }
+}

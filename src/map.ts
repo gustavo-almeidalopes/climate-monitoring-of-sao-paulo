@@ -388,6 +388,9 @@ export function initMap() {
             if (hit) return { inside: true, exact: true, regionId: hit.regionId, district: hit.name, distanceKm: 0 };
             return { inside: false, exact: true, ...nearest };
         }
+        // sem os limites oficiais (GitHub fora do ar): a grade H3 local também sabe o distrito
+        const cell = cellAt(lat, lng);
+        if (cell) return { inside: true, exact: true, regionId: cell.region, district: titleCase(cell.district), distanceKm: 0 };
         return { inside: nearest.distanceKm <= 4, exact: false, ...nearest };
     }
 

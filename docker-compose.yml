@@ -1,0 +1,74 @@
+# ClimaSP completo num comando:  docker compose up --build
+#   painel + API:  http://localhost:8080      (gateway nginx, padrão strangler)
+#   docs Python:   http://localhost:8080/docs
+#   docs Java:     http://localhost:8080/api/v1/ops-java/docs
+# Credenciais de operação: defina OPERATOR_TOKEN e MANAGER_TOKEN num arquivo .env (fora do git);
+# sem elas, as rotas de operação respondem 503 (não há token padrão).
+name: climasp
+
+services:
+  db:
+    image: postgis/postgis:16-3.5-alpine
+    environment:
+      POSTGRES_DB: climasp_ops
+      POSTGRES_USER: climasp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-climasp-dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres-init.sql:/docker-entrypoint-initdb.d/10-postgis.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U climasp -d climasp_ops"]
+      interval: 5s
+      retries: 20
+
+  api:
+    build: .
+    environment:
+      OPERATOR_TOKEN: ${OPERATOR_TOKEN:-}
+      MANAGER_TOKEN: ${MANAGER_TOKEN:-}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+    volumes:
+      - apidata:/app/var
+
+  ops:
+    build:
+      context: .
+      dockerfile: services/ops-java/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/climasp_ops
+      DATABASE_USER: climasp
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-climasp-dev}
+      OPERATOR_TOKEN: ${OPERATOR_TOKEN:-}
+      MANAGER_TOKEN: ${MANAGER_TOKEN:-}
+      PYTHON_API_URL: http://api:8000
+      GEO_DATA_DIR: /data/geo
+      # GraphHopper: coloque um extrato OSM (ex.: sudeste-latest.osm.pbf da Geofabrik) em ./deploy/osm/
+      # e defina OSM_FILE=/osm/sudeste-latest.osm.pbf. Sem ele: OSRM_URL, ou estimativa rotulada.
+      OSM_FILE: ${OSM_FILE:-}
+      OSRM_URL: ${OSRM_URL:-}
+    volumes:
+      - ./deploy/osm:/osm:ro
+      - graphcache:/app/graph-cache
+
+  gateway:
+    image: nginx:1.27-alpine
+    depends_on: [api, ops]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  pgdata:
+  apidata:
+  graphcache:
