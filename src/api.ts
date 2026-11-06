@@ -1,6 +1,13 @@
 /* Cliente HTTP do backend ClimaSP. A URL vem de config.js (window.CLIMASP_API_BASE). */
 import type { Incident, OpsRole, Team } from "./types.js";
 
+export interface ServerRoute { minutes: number; km: number; coords: [number, number][]; estimated: boolean }
+export interface NearestResponse {
+    source: string;
+    estimated: boolean;
+    candidates: { team: Team; minutes: number; routes: ServerRoute[]; estimated: boolean }[];
+}
+
 function defaultBase() {
     const { hostname, origin } = window.location;
     const local = hostname === "localhost" || hostname === "127.0.0.1";
@@ -72,6 +79,9 @@ export const opsApi = {
     resolve: (token: string, id: number, note = "") =>
         request<Incident>(`/api/v1/ops/incidents/${id}/resolve`, { method: "POST", token, body: { note } }),
     report: (token: string, hours = 24) => request(`/api/v1/ops/report?hours=${hours}`, { token }),
+    /** Serviço Java (services/ops-java): equipes mais rápidas calculadas no servidor (GraphHopper/OSRM). */
+    nearest: (token: string, lat: number, lng: number, limit = 5) =>
+        request<NearestResponse>(`/api/v1/ops/nearest?lat=${lat}&lng=${lng}&limit=${limit}`, { token, timeout: 20000 }),
 };
 
 /** Desenvolvimento: envia um erro do navegador ao servidor (DEV_CLIENT_LOG=true). */

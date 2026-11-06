@@ -132,6 +132,12 @@ async def _lifecycle():
     assert (model["true_positive"], model["false_negative"]) == (1, 1)
     assert model["precision"] == 1.0 and model["recall"] == 0.5
 
+    async with AsyncSessionLocal() as session:
+        end = datetime.now(tz=timezone.utc)
+        ctx = await ops_service.report_context(session, start=end - timedelta(hours=24), end=end)
+    assert ctx["rain"] == rep["rain"] and ctx["model"] == rep["model"]
+    assert "incidents" not in ctx
+
 
 def test_example_bases_file_matches_backend_teams():
     """data/geo/example-bases.json (usado no cálculo de cobertura) precisa refletir example_teams()."""
@@ -142,6 +148,28 @@ def test_example_bases_file_matches_backend_teams():
     keys = {b["key"] for b in data["bases"]}
     expected = {f"{t['lat']:.5f},{t['lng']:.5f}" for t in ops_service.example_teams()}
     assert keys == expected, "regenere data/geo/example-bases.json (ver README, Fase 3)"
+
+
+def test_example_teams_file_matches_backend_teams():
+    """data/geo/example-teams.json (semente do serviço Java) precisa refletir example_teams()."""
+    import json
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root / "scripts"))
+    from export_example_teams import payload
+
+    data = json.loads((root / "data/geo/example-teams.json").read_text(encoding="utf-8"))
+    assert data == json.loads(json.dumps(payload(), ensure_ascii=False)), "rode: python scripts/export_example_teams.py"
+    assert all(t["name"].startswith("[EXEMPLO]") for t in data["teams"])
+
+
+def test_report_context_route_requires_manager(client, tokens):
+    assert client.get("/api/v1/ops/report/context").status_code == 401
+    resp = client.get("/api/v1/ops/report/context?hours=6", headers={"Authorization": "Bearer gestor-teste"})
+    assert resp.status_code == 200
+    assert set(resp.json()) == {"start", "end", "rain", "model"}
 
 
 def test_dev_client_log_is_off_by_default_and_writes_when_enabled(client, monkeypatch, tmp_path):

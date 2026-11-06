@@ -58,6 +58,8 @@ export const opsApi = {
     arrive: (token, id) => request(`/api/v1/ops/incidents/${id}/arrive`, { method: "POST", token }),
     resolve: (token, id, note = "") => request(`/api/v1/ops/incidents/${id}/resolve`, { method: "POST", token, body: { note } }),
     report: (token, hours = 24) => request(`/api/v1/ops/report?hours=${hours}`, { token }),
+    /** Serviço Java (services/ops-java): equipes mais rápidas calculadas no servidor (GraphHopper/OSRM). */
+    nearest: (token, lat, lng, limit = 5) => request(`/api/v1/ops/nearest?lat=${lat}&lng=${lng}&limit=${limit}`, { token, timeout: 20000 }),
 };
 /** Desenvolvimento: envia um erro do navegador ao servidor (DEV_CLIENT_LOG=true). */
 export function sendClientLog(entry) {

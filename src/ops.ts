@@ -261,7 +261,27 @@ function setPicking(on) {
     $("#opsPick").textContent = on ? "Clique no mapa… (Esc cancela)" : "Escolher ponto no mapa";
 }
 
+/**
+ * Despacho calculado no servidor (serviço Java com GraphHopper/OSRM). Devolve null quando o
+ * backend não tem a rota (só o FastAPI: 404) ou falha — aí o cálculo segue no navegador.
+ */
+async function nearestFromServer(point: { lat: number; lng: number }) {
+    try {
+        const r = await call(opsApi.nearest, point.lat, point.lng, 5);
+        const list = r.candidates.map(c => {
+            const best = pickRoute(c.routes, mapApi.isCritical);
+            return { team: c.team, minutes: best.minutes, route: best, estimated: c.estimated || best.estimated };
+        }).sort((a, b) => a.minutes - b.minutes).slice(0, 3);
+        return { list, estimated: r.estimated, source: r.source };
+    } catch (err) {
+        if (!(err instanceof ApiError) || ![404, 405, 501].includes(err.status)) console.warn("Despacho no servidor indisponível:", err);
+        return null;
+    }
+}
+
 export async function nearestTeams(point) {
+    const server = await nearestFromServer(point);
+    if (server) return server;
     const teams = (store.get().opsTeams || []).filter(t => t.status === "disponivel");
     if (!teams.length) return { list: [], estimated: false };
     const { minutes, estimated } = await travelTimes(teams.map(t => ({ lat: t.lat, lng: t.lng })), point);

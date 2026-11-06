@@ -68,7 +68,9 @@ _EMOJI = re.compile(
 
 @pytest.mark.parametrize(
     "path",
-    ["index.html", "styles.css", "config.js", *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "js").glob("*.js"))],
+    ["index.html", "styles.css", "config.js",
+     *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "js").glob("*.js")),
+     *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "src").glob("*.ts"))],
 )
 def test_frontend_sem_emojis(path: str) -> None:
     """Interface só com texto e ícones SVG do sprite: nenhum emoji no código do front-end."""
@@ -77,12 +79,13 @@ def test_frontend_sem_emojis(path: str) -> None:
     assert not found, f"{path}: {found}"
 
 
-@pytest.mark.parametrize("path", ["app", "scripts"])
+@pytest.mark.parametrize("path", ["app", "scripts", "services"])
 def test_backend_e_scripts_sem_emojis(path: str) -> None:
     """Mensagens do servidor e dos scripts (inclusive os do Simulador iOS) sem emojis."""
     allowed = {"scripts/build_geodata.py"}  # gera docs/fase-2/fontes.md; alterar dispara nova coleta
     for file in sorted((ROOT / path).rglob("*")):
-        if file.suffix not in {".py", ".sh"} or file.relative_to(ROOT).as_posix() in allowed:
+        if file.suffix not in {".py", ".sh", ".java", ".sql", ".yml"} or file.relative_to(ROOT).as_posix() in allowed \
+                or "target" in file.parts:
             continue
         found = sorted({m.group() for m in _EMOJI.finditer(file.read_text(encoding="utf-8"))})
         assert not found, f"{file.relative_to(ROOT)}: {found}"

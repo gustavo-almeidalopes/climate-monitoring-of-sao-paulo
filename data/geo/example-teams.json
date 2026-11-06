@@ -1,0 +1,194 @@
+{
+ "note": "Equipes FICTÍCIAS ([EXEMPLO]) até haver integração com os sistemas reais. As bases ficam em instalações reais do OpenStreetMap (ODbL) ou no centro de cada subprefeitura; as equipes não existem. Gerado por scripts/export_example_teams.py a partir de app/services/ops_service.example_teams().",
+ "teams": [
+  {
+   "code": "EX-01",
+   "kind": "bombeiros",
+   "name": "[EXEMPLO] Bombeiros 1",
+   "base_name": "Posto de Bombeiros Horto Florestal - 2º Grupamento de Incêndio",
+   "base_source": "OpenStreetMap (ODbL) · node/2390331646",
+   "lat": -23.460119,
+   "lng": -46.64295
+  },
+  {
+   "code": "EX-02",
+   "kind": "bombeiros",
+   "name": "[EXEMPLO] Bombeiros 2",
+   "base_name": "Centro de Suprimentos e Manutenção do Material Operacional de Bombeiros CSM/MOpB",
+   "base_source": "OpenStreetMap (ODbL) · node/13643931827",
+   "lat": -23.527146,
+   "lng": -46.593413
+  },
+  {
+   "code": "EX-03",
+   "kind": "bombeiros",
+   "name": "[EXEMPLO] Bombeiros 3",
+   "base_name": "Corpo de Bombeiros - Posto Almanara",
+   "base_source": "OpenStreetMap (ODbL) · node/14062987401",
+   "lat": -23.475673,
+   "lng": -46.67623
+  },
+  {
+   "code": "EX-04",
+   "kind": "bombeiros",
+   "name": "[EXEMPLO] Bombeiros 4",
+   "base_name": "2º Grupamento de Bombeiros",
+   "base_source": "OpenStreetMap (ODbL) · way/327360322",
+   "lat": -23.512639,
+   "lng": -46.665738
+  },
+  {
+   "code": "EX-05",
+   "kind": "bombeiros",
+   "name": "[EXEMPLO] Bombeiros 5",
+   "base_name": "2º PB SANTANA",
+   "base_source": "OpenStreetMap (ODbL) · way/491009699",
+   "lat": -23.503819,
+   "lng": -46.627974
+  },
+  {
+   "code": "EX-06",
+   "kind": "bombeiros",
+   "name": "[EXEMPLO] Bombeiros 6",
+   "base_name": "Quartel de bombeiros (sem nome no OSM)",
+   "base_source": "OpenStreetMap (ODbL) · way/717671817",
+   "lat": -23.475122,
+   "lng": -46.613264
+  },
+  {
+   "code": "EX-07",
+   "kind": "bombeiros",
+   "name": "[EXEMPLO] Bombeiros 7",
+   "base_name": "Segundo Grupamento de Bombeiros",
+   "base_source": "OpenStreetMap (ODbL) · relation/12581497",
+   "lat": -23.501339,
+   "lng": -46.584756
+  },
+  {
+   "code": "EX-08",
+   "kind": "samu",
+   "name": "[EXEMPLO] SAMU 1",
+   "base_name": "Hospital Policia Militar",
+   "base_source": "OpenStreetMap (ODbL) · node/4090970700",
+   "lat": -23.468955,
+   "lng": -46.616925
+  },
+  {
+   "code": "EX-09",
+   "kind": "samu",
+   "name": "[EXEMPLO] SAMU 2",
+   "base_name": "Hospital Casa Verde",
+   "base_source": "OpenStreetMap (ODbL) · node/5745394212",
+   "lat": -23.506301,
+   "lng": -46.661382
+  },
+  {
+   "code": "EX-10",
+   "kind": "samu",
+   "name": "[EXEMPLO] SAMU 3",
+   "base_name": "Centro Hospitalar do Sistema Penitenciário CHSP/CASH",
+   "base_source": "OpenStreetMap (ODbL) · node/8902094517",
+   "lat": -23.509275,
+   "lng": -46.618991
+  },
+  {
+   "code": "EX-11",
+   "kind": "samu",
+   "name": "[EXEMPLO] SAMU 4",
+   "base_name": "Hospital Presidente",
+   "base_source": "OpenStreetMap (ODbL) · way/277806189",
+   "lat": -23.476456,
+   "lng": -46.610596
+  },
+  {
+   "code": "EX-12",
+   "kind": "defesa_civil",
+   "name": "[EXEMPLO] Defesa Civil Casa Verde",
+   "base_name": "centro aproximado da Subprefeitura Casa Verde/Cachoeirinha",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.487,
+   "lng": -46.66
+  },
+  {
+   "code": "EX-13",
+   "kind": "subprefeitura",
+   "name": "[EXEMPLO] Zeladoria Casa Verde",
+   "base_name": "centro aproximado da Subprefeitura Casa Verde/Cachoeirinha",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.493,
+   "lng": -46.657999999999994
+  },
+  {
+   "code": "EX-14",
+   "kind": "defesa_civil",
+   "name": "[EXEMPLO] Defesa Civil Santana",
+   "base_name": "centro aproximado da Subprefeitura Santana/Tucuruvi",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.482,
+   "lng": -46.615
+  },
+  {
+   "code": "EX-15",
+   "kind": "subprefeitura",
+   "name": "[EXEMPLO] Zeladoria Santana",
+   "base_name": "centro aproximado da Subprefeitura Santana/Tucuruvi",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.488,
+   "lng": -46.613
+  },
+  {
+   "code": "EX-16",
+   "kind": "defesa_civil",
+   "name": "[EXEMPLO] Defesa Civil Jacana",
+   "base_name": "centro aproximado da Subprefeitura Jacana/Tremembe",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.442,
+   "lng": -46.585
+  },
+  {
+   "code": "EX-17",
+   "kind": "subprefeitura",
+   "name": "[EXEMPLO] Zeladoria Jacana",
+   "base_name": "centro aproximado da Subprefeitura Jacana/Tremembe",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.448,
+   "lng": -46.583
+  },
+  {
+   "code": "EX-18",
+   "kind": "defesa_civil",
+   "name": "[EXEMPLO] Defesa Civil Vila Maria",
+   "base_name": "centro aproximado da Subprefeitura Vila Maria/Guilherme",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.507,
+   "lng": -46.585
+  },
+  {
+   "code": "EX-19",
+   "kind": "subprefeitura",
+   "name": "[EXEMPLO] Zeladoria Vila Maria",
+   "base_name": "centro aproximado da Subprefeitura Vila Maria/Guilherme",
+   "base_source": "coordenada de referência do ClimaSP (app/core/constants.py)",
+   "lat": -23.513,
+   "lng": -46.583
+  },
+  {
+   "code": "EX-20",
+   "kind": "cet",
+   "name": "[EXEMPLO] CET 1",
+   "base_name": "ponto fictício em Santana",
+   "base_source": "posição fictícia",
+   "lat": -23.491,
+   "lng": -46.619
+  },
+  {
+   "code": "EX-21",
+   "kind": "cet",
+   "name": "[EXEMPLO] CET 2",
+   "base_name": "ponto fictício em Vila Maria",
+   "base_source": "posição fictícia",
+   "lat": -23.516000000000002,
+   "lng": -46.589
+  }
+ ]
+}
