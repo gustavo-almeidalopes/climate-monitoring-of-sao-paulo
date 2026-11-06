@@ -57,6 +57,21 @@ class Settings(BaseSettings):
     manager_token: str | None = None
     ops_seed_examples: bool = True          # equipes de EXEMPLO (fictícias) enquanto não há integração real
     geo_data_dir: str = "data/geo"
+
+    # Alertas (Fase 4) — canais desligados até serem configurados; nada é enviado sem inscrição.
+    # Web Push (PWA): chaves VAPID geradas com scripts/generate_vapid_keys.py.
+    vapid_public_key: str | None = None
+    vapid_private_key: str | None = None
+    vapid_subject: str | None = None            # "mailto:contato@orgao.gov.br" ou URL do serviço
+    # WhatsApp Business Cloud API (Meta): número verificado + modelo de mensagem aprovado.
+    whatsapp_token: str | None = None
+    whatsapp_phone_number_id: str | None = None
+    whatsapp_verify_token: str | None = None    # combinado com a Meta ao cadastrar o webhook
+    whatsapp_app_secret: str | None = None      # valida a assinatura X-Hub-Signature-256
+    whatsapp_api_version: str = "v21.0"
+    whatsapp_alert_template: str = "alerta_alagamento"
+    whatsapp_template_language: str = "pt_BR"
+    whatsapp_display_number: str | None = None  # número exibido no painel ("+55 11 ...")
     # Desenvolvimento: recebe erros do navegador (ex.: Safari no Simulador iOS) em logs/client.log
     dev_client_log: bool = False
 

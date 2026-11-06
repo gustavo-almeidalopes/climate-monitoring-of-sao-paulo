@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.controllers.alerts_controller import router as alerts_router
 from app.controllers.health_controller import router as health_router
 from app.controllers.ml_controller import router as ml_router
 from app.controllers.news_controller import router as news_router
@@ -14,3 +15,4 @@ api_router.include_router(ml_router)
 api_router.include_router(news_router)
 api_router.include_router(ops_router)
 api_router.include_router(dev_router)
+api_router.include_router(alerts_router)

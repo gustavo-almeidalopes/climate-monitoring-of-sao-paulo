@@ -68,7 +68,7 @@ _EMOJI = re.compile(
 
 @pytest.mark.parametrize(
     "path",
-    ["index.html", "styles.css", "config.js",
+    ["index.html", "styles.css", "config.js", "sw.js", "manifest.webmanifest",
      *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "js").glob("*.js")),
      *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "src").glob("*.ts"))],
 )
@@ -96,3 +96,20 @@ def test_typescript_compilado_em_js() -> None:
     ts = {p.stem for p in (ROOT / "src").glob("*.ts") if not p.name.endswith(".d.ts")}
     js = {p.stem for p in (ROOT / "js").glob("*.js")}
     assert ts == js, f"rode `npm run build`: só em src {sorted(ts - js)}, só em js {sorted(js - ts)}"
+
+
+def test_service_worker_guarda_todos_os_modulos_e_arquivos_do_pwa(client: TestClient) -> None:
+    """O PWA abre sem rede: o sw.js pré-carrega cada módulo de js/ e os arquivos do app shell."""
+    sw = (ROOT / "sw.js").read_text(encoding="utf-8")
+    cached = set(re.findall(r'"(js/[\w-]+\.js)"', sw))
+    assert cached == {f"js/{p.name}" for p in (ROOT / "js").glob("*.js")}, "atualize a lista SHELL do sw.js"
+    for path in ("manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"):
+        assert f'"{path}"' in sw and (ROOT / path).exists()
+    assert client.get("/sw.js").headers["cache-control"] == "no-cache"
+    assert client.get("/manifest.webmanifest").headers["content-type"].startswith("application/manifest+json")
+    assert client.get("/icons/icon-192.png").status_code == 200
+    import json
+    manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
+    assert manifest["lang"] == "pt-BR" and manifest["display"] == "standalone"
+    assert {"192x192", "512x512"} <= {i["sizes"] for i in manifest["icons"]}
+    assert any(i.get("purpose") == "maskable" for i in manifest["icons"])

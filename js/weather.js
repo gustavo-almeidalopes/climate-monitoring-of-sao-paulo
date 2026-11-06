@@ -5,7 +5,7 @@
  * numa chamada). Se o backend for mais antigo e não tiver esse endpoint, cai para
  * /weather/current (sem séries). Sem servidor: dados de exemplo, claramente marcados.
  */
-import { api } from "./api.js";
+import { api, isOfflineCopy } from "./api.js";
 import { REGION_META, sampleRegions } from "./regions.js";
 import { DEFAULT_RISK_CUTS, levelOf } from "./risk.js";
 import { effectiveThresholds, store } from "./state.js";
@@ -126,7 +126,8 @@ export function loadWeather() {
                 throw new Error("Resposta sem regiões conhecidas");
             const thresholds = kind === "overview" ? parseThresholds(data.thresholds) : null;
             const patch = {
-                connection: "online",
+                // cópia guardada pelo service worker: dado real, mas sem conexão agora
+                connection: isOfflineCopy(data) ? "offline" : "online",
                 source: "live",
                 regions,
                 updatedAt: time(data.updated_at) ?? Date.now(),
@@ -139,7 +140,7 @@ export function loadWeather() {
             patch.changes = diffRegions(previous, regions, effectiveThresholds({ ...before, ...patch }));
             patch.changesAt = Date.now();
             store.set(patch);
-            return true;
+            return !isOfflineCopy(data);
         }
         catch (err) {
             console.warn("Servidor do ClimaSP indisponível:", err);

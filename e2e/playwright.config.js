@@ -18,6 +18,9 @@ export default defineConfig({
         locale: "pt-BR",
         timezoneId: "America/Sao_Paulo",
         trace: "retain-on-failure",
+        // O service worker do PWA intercepta requisições e driblaria as simulações de rede;
+        // só tests/pwa.spec.js o liga (serviceWorkers: "allow").
+        serviceWorkers: "block",
     },
     projects: [
         // No Mac (scripts/ios/test.sh): também roda no WebKit com perfil de iPhone — o motor do Safari.

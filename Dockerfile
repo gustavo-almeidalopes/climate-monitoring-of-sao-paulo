@@ -7,7 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY models ./models
 COPY data ./data
-COPY index.html styles.css config.js ./
+COPY index.html styles.css config.js manifest.webmanifest sw.js ./
+COPY icons ./icons
 COPY js ./js
 RUN useradd --system --uid 10001 climasp && mkdir -p /app/var && chown -R climasp /app/var /app/models
 USER climasp

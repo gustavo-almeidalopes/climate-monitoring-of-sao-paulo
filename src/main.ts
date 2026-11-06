@@ -14,6 +14,7 @@ import { initMap } from "./map.js";
 import { initNews } from "./news.js";
 import { initOperator } from "./operator.js";
 import { initOps } from "./ops.js";
+import { initPwa } from "./pwa.js";
 import { initRegionList } from "./regionlist.js";
 import { initSearch } from "./search.js";
 import { initStatus } from "./status.js";
@@ -35,6 +36,7 @@ async function start() {
     initNews();
     initRegionList();
     initTimeline();
+    void initPwa(); // service worker e inscrição em alertas; não atrasa o painel
 
     setLoadingState("weather");
     await loadThresholds();

@@ -145,6 +145,10 @@ export async function mockNetwork(page, opts = {}) {
         apiDown: opts.apiDown ?? false,
         nominatim: opts.nominatim ?? [],
         news: opts.news ?? { articles: [], total: 0, last_scraped_at: null },
+        // Fase 4: canais de alerta (padrão: nenhum configurado) e inscrições recebidas
+        alerts: opts.alerts ?? { web_push: false, vapid_public_key: null, whatsapp: false, whatsapp_number: null },
+        subscriptions: [],
+        apiAbort: opts.apiAbort ?? false,
         requests: [],
     };
 
@@ -177,6 +181,7 @@ export async function mockNetwork(page, opts = {}) {
     await page.route(/\/api\/v1\//, route => {
         const url = new URL(route.request().url());
         state.requests.push(url.pathname);
+        if (state.apiAbort) return route.abort("internetdisconnected"); // sem rede (não é erro do servidor)
         const down = typeof state.apiDown === "function" ? state.apiDown() : state.apiDown;
         if (down) return route.fulfill({ status: 503, body: "{}", contentType: "application/json" });
         const json = body => route.fulfill({ status: 200, body: JSON.stringify(body), contentType: "application/json" });
@@ -195,6 +200,13 @@ export async function mockNetwork(page, opts = {}) {
             return json(resolve(state.current) || currentPayload());
         }
         if (url.pathname.includes("/news")) return json(state.news);
+        if (url.pathname.endsWith("/alerts/channels")) return json(state.alerts);
+        if (url.pathname.endsWith("/alerts/push/subscribe")) {
+            const body = JSON.parse(route.request().postData() || "{}");
+            state.subscriptions.push(body);
+            return route.fulfill({ status: 201, body: JSON.stringify({ regions: body.regions, min_level: body.min_level }), contentType: "application/json" });
+        }
+        if (url.pathname.endsWith("/alerts/push/unsubscribe")) return json({ deleted: true });
         return route.fulfill({ status: 404, body: "{}", contentType: "application/json" });
     });
 
