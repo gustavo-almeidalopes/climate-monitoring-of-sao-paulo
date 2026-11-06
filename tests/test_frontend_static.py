@@ -86,3 +86,10 @@ def test_backend_e_scripts_sem_emojis(path: str) -> None:
             continue
         found = sorted({m.group() for m in _EMOJI.finditer(file.read_text(encoding="utf-8"))})
         assert not found, f"{file.relative_to(ROOT)}: {found}"
+
+
+def test_typescript_compilado_em_js() -> None:
+    """Cada módulo src/*.ts tem o js/*.js correspondente (gerado por `npm run build`) e vice-versa."""
+    ts = {p.stem for p in (ROOT / "src").glob("*.ts") if not p.name.endswith(".d.ts")}
+    js = {p.stem for p in (ROOT / "js").glob("*.js")}
+    assert ts == js, f"rode `npm run build`: só em src {sorted(ts - js)}, só em js {sorted(js - ts)}"

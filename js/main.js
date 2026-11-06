@@ -22,7 +22,6 @@ import { initTimeline } from "./timeline.js";
 import { initTooltips } from "./tooltips.js";
 import { initUi, setLoadingState, showMapError } from "./ui.js";
 import { initAutoRefresh, loadThresholds, loadWeather } from "./weather.js";
-
 async function start() {
     initDevLog(); // só em desenvolvimento (window.CLIMASP_DEV_LOG)
     // Partes que funcionam mesmo se o mapa falhar.
@@ -35,12 +34,10 @@ async function start() {
     initNews();
     initRegionList();
     initTimeline();
-
     setLoadingState("weather");
     await loadThresholds();
     await loadWeather();
     initAutoRefresh();
-
     if (typeof window.L === "undefined") {
         showMapError();
         return;
@@ -52,7 +49,6 @@ async function start() {
     initLayers(mapApi.map);
     initOps(mapApi);
 }
-
 start().catch(err => {
     console.error("Falha ao inicializar o ClimaSP:", err);
     showMapError();

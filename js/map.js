@@ -14,23 +14,19 @@ import { regionPopup } from "./popup.js";
 import { DISTRICT_TO_REGION, REGION_META, districtLabel } from "./regions.js";
 import { setFocusHandler, selectRegion } from "./regionlist.js";
 import { LEVELS, SAMPLE_COLOR, levelOf } from "./risk.js";
-import { effectiveThresholds, store } from "./state.js";
+import { effectiveThresholds, regionList, store } from "./state.js";
 import { hideLoading, setLoadingState } from "./ui.js";
 import { $$, escapeHtml, fmt1, haversineKm, normalizeName, pointInGeometry, storage } from "./util.js";
-
-const L = window.L;
 const BASE_KEY = "climasp_base_layer";
 const GEOJSON_URL = "https://raw.githubusercontent.com/codigourbano/distritos-sp/master/distritos-sp.geojson";
 const HEX_URL = "data/geo/hex-zona-norte.geojson";
 const POPUP_OPTS = { maxWidth: 330, autoPanPadding: [50, 50] };
 const ORDER = ["low", "medium", "high", "critical"];
-
 const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const CARTO_ATTR = `${OSM_ATTR} &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 const ESRI_ATTR = "Imagens &copy; Esri — Esri, Maxar, Earthstar Geographics e comunidade de usuários GIS";
-
 function makeTiles() {
-    const carto = style => L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {
+    const carto = (style) => L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {
         attribution: CARTO_ATTR, subdomains: "abcd", maxZoom: 19,
     });
     return {
@@ -47,7 +43,6 @@ function makeTiles() {
         osm: () => [L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: OSM_ATTR, maxZoom: 19 })],
     };
 }
-
 /* Contornos aproximados desenhados à mão — usados só se o GeoJSON oficial não carregar,
    e sempre identificados como "aproximados" no popup. */
 const FALLBACK_POLYGONS = {
@@ -56,20 +51,18 @@ const FALLBACK_POLYGONS = {
     JT: [[-23.48, -46.598], [-23.465, -46.605], [-23.445, -46.595], [-23.415, -46.57], [-23.43, -46.54], [-23.465, -46.55], [-23.485, -46.58]],
     MG: [[-23.521, -46.6], [-23.495, -46.595], [-23.485, -46.58], [-23.495, -46.56], [-23.52, -46.552], [-23.528, -46.57], [-23.524, -46.595]],
 };
-
 function identifyDistrict(props) {
     for (const key of Object.keys(props || {})) {
-        if (typeof props[key] !== "string") continue;
+        if (typeof props[key] !== "string")
+            continue;
         const name = normalizeName(props[key]);
-        if (DISTRICT_TO_REGION[name]) return { regionId: DISTRICT_TO_REGION[name], name };
+        if (DISTRICT_TO_REGION[name])
+            return { regionId: DISTRICT_TO_REGION[name], name };
     }
     return null;
 }
-
 const bucketKey = (lat, lng) => `${Math.floor(lat / 0.01)}:${Math.floor(lng / 0.01)}`;
-
-const titleCase = s => districtLabel(s);
-
+const titleCase = (s) => districtLabel(s);
 /**
  * Nível da célula hexagonal: o nível da região sobe UM degrau quando a célula está entre as
  * 10% mais suscetíveis da grade (corte calculado dos dados) e a região já está em Médio ou acima. Nunca desce — num painel
@@ -82,15 +75,16 @@ export function cellLevel(regionDanger, susc, cut = 0.66) {
     }
     return regionDanger;
 }
-
 function cellPopup(props, region, danger, thresholds, state) {
     const lines = [];
     if (props.elev_m != null) {
         const rel = props.rel_elev_m;
         lines.push(`Altitude ${fmt1(props.elev_m)} m${rel != null ? ` (${rel < 0 ? `${fmt1(Math.abs(rel))} m abaixo` : `${fmt1(rel)} m acima`} do entorno)` : ""}`);
     }
-    if (props.dist_stream_m != null) lines.push(`${Math.round(props.dist_stream_m)} m de ${escapeHtml(props.nearest_stream || "curso d'água")}`);
-    if (props.occurrences != null) lines.push(`${props.occurrences} ocorrência(s) de alagamento registrada(s) na célula e vizinhas`);
+    if (props.dist_stream_m != null)
+        lines.push(`${Math.round(props.dist_stream_m)} m de ${escapeHtml(props.nearest_stream || "curso d'água")}`);
+    if (props.occurrences != null)
+        lines.push(`${props.occurrences} ocorrência(s) de alagamento registrada(s) na célula e vizinhas`);
     const susc = props.susc != null ? `Suscetibilidade relativa: ${fmt1(props.susc * 10)}/10` : "Suscetibilidade não calculada (sem dados de relevo).";
     return `${regionPopup(region, thresholds, { now: state.now, model: state.model })}
         <div class="pu-cellinfo"><div class="pu-next-h">Esta célula (${escapeHtml(titleCase(props.district || ""))})</div>
@@ -98,24 +92,22 @@ function cellPopup(props, region, danger, thresholds, state) {
         ${lines.map(l => `<div class="pu-note">${l}</div>`).join("")}
         <div class="pu-note">Índice experimental. Fontes: relevo (Copernicus/SRTM), cursos d'água (OSM), ocorrências (GeoSampa).</div></div>`;
 }
-
 export function initMap() {
     const map = L.map("map", { zoomControl: false, center: [-23.475, -46.61], zoom: 12, zoomSnap: 0.5 });
     L.control.zoom({ position: "topleft", zoomInTitle: "Aproximar", zoomOutTitle: "Afastar" }).addTo(map);
-
     // Panes: preenchimento (com borda esmaecida), contornos nítidos, linhas e rótulos.
-    map.createPane("radar").style.zIndex = 350;
-    map.createPane("zonesFill").style.zIndex = 400;
-    map.createPane("zonesLine").style.zIndex = 410;
-    map.createPane("lines").style.zIndex = 420;
+    map.createPane("radar").style.zIndex = "350";
+    map.createPane("zonesFill").style.zIndex = "400";
+    map.createPane("zonesLine").style.zIndex = "410";
+    map.createPane("lines").style.zIndex = "420";
     const fillRenderer = L.svg({ pane: "zonesFill", padding: 0.5 });
     const lineRenderer = L.svg({ pane: "zonesLine", padding: 0.5 });
-
     /* ---------- mapa base ---------- */
     const tiles = makeTiles();
     let activeBase = [];
-    const savedBase = storage.get(BASE_KEY, "auto");
-    store.set({ baseLayer: ["auto", "satellite", "osm"].includes(savedBase) ? savedBase : "auto" });
+    const savedBase = storage.get(BASE_KEY, "auto") ?? "auto";
+    const bases = ["auto", "satellite", "osm"];
+    store.set({ baseLayer: bases.includes(savedBase) ? savedBase : "auto" });
     store.subscribe(s => [s.theme, s.baseLayer], ([theme, base]) => {
         const key = base === "auto" ? (theme === "light" ? "light" : "dark") : base;
         activeBase.forEach(layer => map.removeLayer(layer));
@@ -132,107 +124,122 @@ export function initMap() {
         storage.set(BASE_KEY, btn.dataset.base);
         store.set({ baseLayer: btn.dataset.base });
     }));
-
     /* ---------- grupos ---------- */
-    const grpDistrictFill = L.layerGroup().addTo(map);   // distritos pintados (sem grade)
-    const grpHex = L.layerGroup();                       // grade hexagonal
-    const grpOutlines = L.layerGroup().addTo(map);       // perímetros
+    const grpDistrictFill = L.layerGroup().addTo(map); // distritos pintados (sem grade)
+    const grpHex = L.layerGroup(); // grade hexagonal
+    const grpOutlines = L.layerGroup().addTo(map); // perímetros
     const grpLabels = L.layerGroup().addTo(map);
     const groups = { flood_zones: null, regions: grpOutlines }; // flood_zones decide entre grade e distritos
     let zonesOn = true;
     let hexOn = true;
-
     const districtFills = []; // { id, layer, approximate }
-    const outlines = [];      // { id, layer }
-    const hexCells = [];      // { props, layer }
-    let suscCut = 0.66;       // recalculado: percentil 90 da suscetibilidade da grade
+    const outlines = []; // { id, layer }
+    const hexCells = []; // { props, layer }
+    let suscCut = 0.66; // recalculado: percentil 90 da suscetibilidade da grade
     const cellLevelNow = new Map(); // h3 -> nível da célula AGORA (para rotas que evitam zona crítica)
-    const cellIndex = [];           // { h3, lat, lng, region, district, susc, nearest_stream, dist_stream_m }
-    const cellBuckets = new Map();  // grade grosseira para achar a célula de um ponto
+    const cellIndex = []; // { h3, lat, lng, region, district, susc, nearest_stream, dist_stream_m }
+    const cellBuckets = new Map(); // grade grosseira para achar a célula de um ponto
     const labels = {};
     let districtFeatures = null;
     const regionBounds = {};
-
     function syncZoneGroups() {
         const useHex = hexOn && hexCells.length > 0;
-        const want = (g, on) => { if (on && !map.hasLayer(g)) map.addLayer(g); if (!on && map.hasLayer(g)) map.removeLayer(g); };
+        const want = (g, on) => { if (on && !map.hasLayer(g))
+            map.addLayer(g); if (!on && map.hasLayer(g))
+            map.removeLayer(g); };
         want(grpHex, zonesOn && useHex);
         want(grpDistrictFill, zonesOn && !useHex);
         map.getContainer().dataset.zones = !zonesOn ? "off" : useHex ? "hex" : "districts";
-        if (painting) paint(); // o Leaflet recria os elementos SVG ao readicionar um grupo
+        if (painting)
+            paint(); // o Leaflet recria os elementos SVG ao readicionar um grupo
     }
     let painting = false;
-
     $$('.lp-row[data-overlay]').forEach(btn => btn.addEventListener("click", () => {
         const on = !btn.classList.contains("on");
         btn.classList.toggle("on", on);
         btn.setAttribute("aria-checked", String(on));
         const key = btn.dataset.overlay;
-        if (key === "flood_zones") { zonesOn = on; syncZoneGroups(); return; }
-        if (key === "hex") { hexOn = on; syncZoneGroups(); return; }
-        const group = groups[key];
-        if (group) { if (on) map.addLayer(group); else map.removeLayer(group); if (on && painting) paint(); }
+        if (key === "flood_zones") {
+            zonesOn = on;
+            syncZoneGroups();
+            return;
+        }
+        if (key === "hex") {
+            hexOn = on;
+            syncZoneGroups();
+            return;
+        }
+        const group = key ? groups[key] : undefined;
+        if (group) {
+            if (on)
+                map.addLayer(group);
+            else
+                map.removeLayer(group);
+            if (on && painting)
+                paint();
+        }
     }));
-
     function addLabels() {
         for (const meta of Object.values(REGION_META)) {
             labels[meta.id] = L.marker([meta.lat, meta.lng], {
                 interactive: false, keyboard: false,
-                icon: L.divIcon({ className: "subpref-label", html: `<div class="subpref-label-inner">${escapeHtml(meta.short)}</div>`, iconSize: null, iconAnchor: [0, 0] }),
+                icon: L.divIcon({ className: "subpref-label", html: `<div class="subpref-label-inner">${escapeHtml(meta.short)}</div>`, iconSize: undefined, iconAnchor: [0, 0] }),
             }).addTo(grpLabels);
         }
     }
-
     /* ---------- pintura ---------- */
-    function zoneStyle(danger, { sample, forecast, opacity }) {
+    function zoneStyle(danger, { sample, opacity }) {
         const color = sample ? SAMPLE_COLOR : danger.color;
         return {
             color, fillColor: color, weight: 0, opacity: 0,
             fillOpacity: sample ? 0.45 : opacity,
         };
     }
-
     function setClasses(layer, classes) {
         const el = layer.getElement && layer.getElement();
-        if (!el) return;
+        if (!el)
+            return;
         const interactive = layer.options.interactive !== false ? "leaflet-interactive " : "";
         el.setAttribute("class", `${interactive}${classes}`);
     }
-
     function paint() {
         const state = store.get();
         const thresholds = effectiveThresholds(state);
         const sample = state.source === "sample";
         const offset = state.timeOffset || 0;
         const at = {};
-        for (const [id, region] of Object.entries(state.regions)) {
-            at[id] = regionAtOffset(region, offset, state.now) || null;
+        for (const region of regionList(state.regions)) {
+            at[region.id] = regionAtOffset(region, offset, state.now) || null;
         }
         const anyForecast = Object.values(at).some(r => r && r.kind === "forecast");
         map.getContainer().dataset.timeKind = offset === 0 ? "now" : anyForecast ? "forecast" : "observed";
-
-        const kindClass = r => (r && r.kind === "forecast" ? "z-forecast" : "z-observed");
-
+        const kindClass = (r) => (r && r.kind === "forecast" ? "z-forecast" : "z-observed");
         for (const { id, layer, approximate } of districtFills) {
             const r = at[id];
-            if (!r) { layer.setStyle({ fillOpacity: 0.04, fillColor: SAMPLE_COLOR }); setClasses(layer, "z-nodata"); continue; }
+            if (!r) {
+                layer.setStyle({ fillOpacity: 0.04, fillColor: SAMPLE_COLOR });
+                setClasses(layer, "z-nodata");
+                continue;
+            }
             const d = levelOf(r, thresholds);
             layer.setStyle(zoneStyle(d, { sample, opacity: 0.22 + d.rank * 0.08 }));
             setClasses(layer, `${sample ? "zone-sample" : `lvl-${d.level} ${kindClass(r)}`}`);
             layer.setPopupContent(regionPopup(r, thresholds, { now: state.now, approximate, model: state.model }));
         }
-
         for (const { id, layer } of outlines) {
             const r = at[id];
             const d = r ? levelOf(r, thresholds) : LEVELS.low;
             const color = sample || !r ? SAMPLE_COLOR : d.color;
-            layer.setStyle({ color, weight: d.rank >= 2 && !sample ? 2.4 : 1.4, opacity: 0.95, fill: false, dashArray: sample || (r && r.kind === "forecast") ? "6 5" : null });
+            layer.setStyle({ color, weight: d.rank >= 2 && !sample ? 2.4 : 1.4, opacity: 0.95, fill: false, dashArray: sample || (r && r.kind === "forecast") ? "6 5" : undefined });
             setClasses(layer, `z-outline ${!sample && r && r.kind !== "forecast" && d.level === "critical" ? "z-pulse" : ""}`);
         }
-
         for (const { props, layer } of hexCells) {
             const r = at[props.region];
-            if (!r) { layer.setStyle({ fillOpacity: 0.03, fillColor: SAMPLE_COLOR }); setClasses(layer, "z-nodata"); continue; }
+            if (!r) {
+                layer.setStyle({ fillOpacity: 0.03, fillColor: SAMPLE_COLOR });
+                setClasses(layer, "z-nodata");
+                continue;
+            }
             const regionDanger = levelOf(r, thresholds);
             const d = sample ? regionDanger : cellLevel(regionDanger, props.susc, suscCut);
             const s = props.susc == null ? 0.4 : props.susc;
@@ -241,15 +248,21 @@ export function initMap() {
             layer.setStyle(zoneStyle(d, { sample, opacity }));
             setClasses(layer, `hex ${sample ? "zone-sample" : `lvl-${d.level} ${kindClass(r)}`} ${!sample && r.kind !== "forecast" && d.level === "critical" ? "z-pulse" : ""}`);
             layer._climasp = { region: r, danger: d, thresholds };
-            if (!offset) cellLevelNow.set(props.h3, sample ? "low" : d.level);
+            if (!offset)
+                cellLevelNow.set(props.h3, sample ? "low" : d.level);
         }
-
         for (const [id, marker] of Object.entries(labels)) {
             const r = at[id];
             const el = marker.getElement();
-            if (!el) continue;
+            if (!el)
+                continue;
             const inner = el.querySelector(".subpref-label-inner");
-            if (!r) { inner.textContent = REGION_META[id].short; continue; }
+            if (!inner)
+                continue;
+            if (!r) {
+                inner.textContent = REGION_META[id].short;
+                continue;
+            }
             const d = levelOf(r, thresholds);
             inner.innerHTML = sample
                 ? `${escapeHtml(r.short)} · exemplo`
@@ -258,7 +271,6 @@ export function initMap() {
             el.classList.toggle("is-forecast", r.kind === "forecast");
         }
     }
-
     function registerDistrict(id, fillLayer, outlineLayer, approximate = false) {
         fillLayer.bindPopup("", POPUP_OPTS);
         districtFills.push({ id, layer: fillLayer, approximate });
@@ -266,7 +278,6 @@ export function initMap() {
         const b = fillLayer.getBounds();
         regionBounds[id] = regionBounds[id] ? regionBounds[id].extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast());
     }
-
     function renderFallback() {
         for (const [id, coords] of Object.entries(FALLBACK_POLYGONS)) {
             const fill = L.polygon(coords, { renderer: fillRenderer, stroke: false }).addTo(grpDistrictFill);
@@ -274,62 +285,64 @@ export function initMap() {
             registerDistrict(id, fill, line, true);
         }
     }
-
     setLoadingState("districts");
     addLabels();
-
     const districtsReady = fetch(GEOJSON_URL)
-        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(r => { if (!r.ok)
+        throw new Error(`HTTP ${r.status}`); return r.json(); })
         .then(geo => {
-            districtFeatures = [];
-            for (const f of geo.features || []) {
-                const hit = identifyDistrict(f.properties);
-                if (!hit) continue;
-                districtFeatures.push({ regionId: hit.regionId, name: titleCase(hit.name), geometry: f.geometry });
-                const fill = L.geoJSON(f, { renderer: fillRenderer, style: { stroke: false } }).getLayers()[0];
-                fill.addTo(grpDistrictFill);
-                const line = L.geoJSON(f, { renderer: lineRenderer, style: { fill: false }, interactive: false }).getLayers()[0];
-                line.addTo(grpOutlines);
-                registerDistrict(hit.regionId, fill, line);
-            }
-        })
+        districtFeatures = [];
+        for (const f of geo.features || []) {
+            const hit = identifyDistrict(f.properties);
+            if (!hit)
+                continue;
+            districtFeatures.push({ regionId: hit.regionId, name: titleCase(hit.name), geometry: f.geometry });
+            const fill = L.geoJSON(f, { renderer: fillRenderer, style: { stroke: false } }).getLayers()[0];
+            fill.addTo(grpDistrictFill);
+            const line = L.geoJSON(f, { renderer: lineRenderer, style: { fill: false }, interactive: false }).getLayers()[0];
+            line.addTo(grpOutlines);
+            registerDistrict(hit.regionId, fill, line);
+        }
+    })
         .catch(err => {
-            console.warn("Limites dos distritos indisponíveis; usando contornos aproximados.", err);
-            renderFallback();
-        });
-
+        console.warn("Limites dos distritos indisponíveis; usando contornos aproximados.", err);
+        renderFallback();
+    });
     const hexReady = fetch(HEX_URL)
-        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(r => { if (!r.ok)
+        throw new Error(`HTTP ${r.status}`); return r.json(); })
         .then(geo => {
-            L.geoJSON(geo, {
-                renderer: fillRenderer,
-                style: { stroke: false },
-                onEachFeature: (f, layer) => {
-                    hexCells.push({ props: f.properties, layer });
-                    const ring = f.geometry.coordinates[0];
-                    const cell = {
-                        ...f.properties,
-                        lat: ring.reduce((s, c) => s + c[1], 0) / ring.length,
-                        lng: ring.reduce((s, c) => s + c[0], 0) / ring.length,
-                    };
-                    cellIndex.push(cell);
-                    const key = bucketKey(cell.lat, cell.lng);
-                    if (!cellBuckets.has(key)) cellBuckets.set(key, []);
-                    cellBuckets.get(key).push(cell);
-                    layer.bindPopup(() => {
-                        const info = layer._climasp;
-                        const state = store.get();
-                        if (!info) return "Sem dados.";
-                        return cellPopup(f.properties, info.region, info.danger, info.thresholds, state);
-                    }, POPUP_OPTS);
-                },
-            }).addTo(grpHex);
-            const values = hexCells.map(c => c.props.susc).filter(v => v != null).sort((a, b) => a - b);
-            if (values.length) suscCut = values[Math.floor(values.length * 0.9)];
-            map.getContainer().dataset.suscCut = String(suscCut);
-        })
+        L.geoJSON(geo, {
+            renderer: fillRenderer,
+            style: { stroke: false },
+            onEachFeature: (f, layer) => {
+                hexCells.push({ props: f.properties, layer });
+                const ring = f.geometry.coordinates[0];
+                const cell = {
+                    ...f.properties,
+                    lat: ring.reduce((s, c) => s + c[1], 0) / ring.length,
+                    lng: ring.reduce((s, c) => s + c[0], 0) / ring.length,
+                };
+                cellIndex.push(cell);
+                const key = bucketKey(cell.lat, cell.lng);
+                if (!cellBuckets.has(key))
+                    cellBuckets.set(key, []);
+                cellBuckets.get(key).push(cell);
+                layer.bindPopup(() => {
+                    const info = layer._climasp;
+                    const state = store.get();
+                    if (!info)
+                        return "Sem dados.";
+                    return cellPopup(f.properties, info.region, info.danger, info.thresholds, state);
+                }, POPUP_OPTS);
+            },
+        }).addTo(grpHex);
+        const values = hexCells.map(c => c.props.susc).filter(v => v != null).sort((a, b) => a - b);
+        if (values.length)
+            suscCut = values[Math.floor(values.length * 0.9)];
+        map.getContainer().dataset.suscCut = String(suscCut);
+    })
         .catch(err => console.warn("Grade hexagonal indisponível; zonas pelos distritos.", err));
-
     Promise.allSettled([districtsReady, hexReady]).then(() => {
         syncZoneGroups();
         painting = true;
@@ -337,24 +350,26 @@ export function initMap() {
         hideLoading();
         focusWorstOnce();
     });
-
     /* ---------- foco ---------- */
     function focusRegion(id) {
         const b = regionBounds[id];
-        if (b) map.flyToBounds(b, { padding: [40, 40], maxZoom: 14, duration: 0.8 });
-        else if (REGION_META[id]) map.flyTo([REGION_META[id].lat, REGION_META[id].lng], 13, { duration: 0.8 });
+        if (b)
+            map.flyToBounds(b, { padding: [40, 40], maxZoom: 14, duration: 0.8 });
+        else if (REGION_META[id])
+            map.flyTo([REGION_META[id].lat, REGION_META[id].lng], 13, { duration: 0.8 });
     }
     setFocusHandler(focusRegion);
-
     /** Foco automático na pior área — uma vez por sessão, só com dado real em Alto ou Crítico. */
     let focused = false;
     function focusWorstOnce() {
         store.subscribe(s => [s.source, s.regions], ([source, regions]) => {
-            if (focused || source !== "live") return;
+            if (focused || source !== "live")
+                return;
             const thresholds = effectiveThresholds(store.get());
-            const list = Object.values(regions).map(r => ({ r, d: levelOf(r, thresholds) }))
+            const list = regionList(regions).map(r => ({ r, d: levelOf(r, thresholds) }))
                 .sort((a, b) => b.d.rank - a.d.rank || (b.r.rain ?? 0) - (a.r.rain ?? 0));
-            if (!list.length) return;
+            if (!list.length)
+                return;
             focused = true;
             const top = list[0];
             if (top.d.rank >= LEVELS.high.rank && list.filter(x => x.d.rank === top.d.rank).length < list.length) {
@@ -363,13 +378,14 @@ export function initMap() {
             }
         });
     }
-
     // "Ver detalhes" dentro de qualquer popup abre o painel da região
     map.getContainer().addEventListener("click", e => {
         const btn = e.target.closest('[data-action="details"]');
-        if (btn) { map.closePopup(); selectRegion(btn.dataset.region, { focusMap: false }); }
+        if (btn) {
+            map.closePopup();
+            selectRegion(btn.dataset.region, { focusMap: false });
+        }
     });
-
     /**
      * Em qual região monitorada está o ponto?
      * Com os limites oficiais: teste de ponto-em-polígono (exato).
@@ -379,16 +395,17 @@ export function initMap() {
         let nearest = null;
         for (const meta of Object.values(REGION_META)) {
             const distanceKm = haversineKm(lat, lng, meta.lat, meta.lng);
-            if (!nearest || distanceKm < nearest.distanceKm) nearest = { regionId: meta.id, distanceKm };
+            if (!nearest || distanceKm < nearest.distanceKm)
+                nearest = { regionId: meta.id, distanceKm };
         }
         if (districtFeatures) {
             const hit = districtFeatures.find(f => pointInGeometry(lat, lng, f.geometry));
-            if (hit) return { inside: true, exact: true, regionId: hit.regionId, district: hit.name, distanceKm: 0 };
+            if (hit)
+                return { inside: true, exact: true, regionId: hit.regionId, district: hit.name, distanceKm: 0 };
             return { inside: false, exact: true, ...nearest };
         }
         return { inside: nearest.distanceKm <= 4, exact: false, ...nearest };
     }
-
     /** Célula H3 mais próxima do ponto (até ~250 m), ou null fora da grade. */
     function cellAt(lat, lng) {
         let best = null;
@@ -397,13 +414,13 @@ export function initMap() {
             for (let dj = -1; dj <= 1; dj++) {
                 for (const c of cellBuckets.get(`${bi + di}:${bj + dj}`) || []) {
                     const d = haversineKm(lat, lng, c.lat, c.lng);
-                    if (d <= 0.25 && (!best || d < best.d)) best = { d, c };
+                    if (d <= 0.25 && (!best || d < best.d))
+                        best = { d, c };
                 }
             }
         }
         return best ? best.c : null;
     }
-
     return {
         map, locate, focusRegion, cellAt,
         cells: () => cellIndex,

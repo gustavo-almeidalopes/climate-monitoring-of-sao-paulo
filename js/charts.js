@@ -9,12 +9,11 @@
  */
 import { LEVELS, levelOf } from "./risk.js";
 import { escapeHtml, fmt1, fmtClock, fmtDateTime } from "./util.js";
-
 const HOUR = 3_600_000;
-
 export function sparkline(points, { width = 84, height = 24, label = "Chuva nas últimas 6 h" } = {}) {
     const pts = (points || []).filter(p => p.rain != null);
-    if (pts.length < 2) return `<span class="spark-empty" title="${escapeHtml(label)}: sem histórico">—</span>`;
+    if (pts.length < 2)
+        return `<span class="spark-empty" title="${escapeHtml(label)}: sem histórico">—</span>`;
     const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
     const realMax = Math.max(...pts.map(p => p.rain));
     const max = Math.max(1, realMax);
@@ -32,25 +31,25 @@ export function sparkline(points, { width = 84, height = 24, label = "Chuva nas 
         <circle cx="${x(last.t).toFixed(1)}" cy="${y(last.rain).toFixed(1)}" r="2.5" fill="currentColor"/>
     </svg>`;
 }
-
 function timeAxis(t0, t1, now) {
     const pos = t => (((t - t0) / (t1 - t0)) * 100).toFixed(2);
     const ticks = [];
     for (let h = -24; h <= 48; h += 12) {
         const t = now + h * HOUR;
-        if (t < t0 || t > t1) continue;
+        if (t < t0 || t > t1)
+            continue;
         const label = h === 0 ? "agora" : `${h > 0 ? "+" : "−"}${Math.abs(h)} h`;
         ticks.push(`<span class="ax-tick ${h === 0 ? "now" : ""}" style="left:${pos(t)}%">${label}</span>`);
     }
     return `<div class="chart-axis" aria-hidden="true">${ticks.join("")}</div>`;
 }
-
 /**
  * Barras de chuva por hora. series: [{ t, kind, rain, risk, riskSource }].
  */
 export function rainBars(series, { now = Date.now(), thresholds }) {
     const pts = (series || []).filter(p => p.rain != null);
-    if (!pts.length) return '<p class="chart-empty">Sem série horária disponível.</p>';
+    if (!pts.length)
+        return '<p class="chart-empty">Sem série horária disponível.</p>';
     const hourNow = new Date(now).setMinutes(0, 0, 0);
     const t0 = hourNow - 24 * HOUR, t1 = hourNow + 48 * HOUR;
     const inRange = pts.filter(p => p.t >= t0 && p.t <= t1);
@@ -90,11 +89,11 @@ export function rainBars(series, { now = Date.now(), thresholds }) {
         <div class="chart-key" aria-hidden="true"><span class="key-obs"></span>observado <span class="key-fc"></span>previsto (hachurado)</div>
     </div>`;
 }
-
 /** Linha do índice de risco 0–100 com a faixa crítica. */
 export function riskLine(series, { now = Date.now(), cuts }) {
     const pts = (series || []).filter(p => p.risk != null);
-    if (!pts.length) return '<p class="chart-empty">Sem série de risco disponível.</p>';
+    if (!pts.length)
+        return '<p class="chart-empty">Sem série de risco disponível.</p>';
     const hourNow = new Date(now).setMinutes(0, 0, 0);
     const t0 = hourNow - 24 * HOUR, t1 = hourNow + 48 * HOUR;
     const inRange = pts.filter(p => p.t >= t0 && p.t <= t1);
@@ -108,7 +107,8 @@ export function riskLine(series, { now = Date.now(), cuts }) {
         if (start && prev && prev.kind !== p.kind && p.t - prev.t <= 1.5 * HOUR) {
             segs[p.kind] += `M${x(prev.t).toFixed(1)},${y(prev.risk).toFixed(1)}`; // costura entre observado e previsto
             segs[p.kind] += `L${x(p.t).toFixed(1)},${y(p.risk).toFixed(1)}`;
-        } else {
+        }
+        else {
             segs[p.kind] += `${start ? "M" : "L"}${x(p.t).toFixed(1)},${y(p.risk).toFixed(1)}`;
         }
         prev = p;
@@ -133,7 +133,6 @@ export function riskLine(series, { now = Date.now(), cuts }) {
         ${heuristic ? '<p class="chart-note">Parte da série usa o índice heurístico (sem modelo), que não define o nível.</p>' : ""}
     </div>`;
 }
-
 export function dataTable(series, thresholds) {
     const rows = (series || []).map(p => {
         const d = levelOf(p, thresholds);
@@ -145,8 +144,8 @@ export function dataTable(series, thresholds) {
         <thead><tr><th scope="col">Hora</th><th scope="col">Tipo</th><th scope="col">Chuva (mm/h)</th><th scope="col">Risco</th><th scope="col">Nível</th></tr></thead>
         <tbody>${rows}</tbody></table></div></details>`;
 }
-
 export function clockRange(series) {
-    if (!series || !series.length) return "";
+    if (!series || !series.length)
+        return "";
     return `${fmtClock(series[0].t)}–${fmtClock(series[series.length - 1].t)}`;
 }

@@ -3,41 +3,41 @@ import { icon, weatherIconName } from "./icons.js";
 import { agoText, forecastConcern, nowcastText, trendInfo } from "./insights.js";
 import { levelOf } from "./risk.js";
 import { escapeHtml, fmt0, fmt1, fmtClock, fmtDateTime } from "./util.js";
-
 export function levelBadge(danger, sample) {
-    if (sample) return '<div class="pu-badge sample">Exemplo</div>';
+    if (sample)
+        return '<div class="pu-badge sample">Exemplo</div>';
     return `<div class="pu-badge ${danger.level}">${danger.label}</div>`;
 }
-
 function dataAge(region, now) {
     if (region.isSample) {
         return '<div class="pu-age sample">Dados de exemplo — sem conexão com o servidor. Não use para decisões.</div>';
     }
-    if (region.kind === "forecast") return `<div class="pu-age">Previsão para ${fmtDateTime(region.atTime)}</div>`;
-    if (region.atTime && region.atTime !== region.recordedAt) return `<div class="pu-age">Observado em ${fmtDateTime(region.atTime)}</div>`;
-    if (!region.recordedAt) return "";
+    if (region.kind === "forecast")
+        return `<div class="pu-age">Previsão para ${fmtDateTime(region.atTime)}</div>`;
+    if (region.atTime && region.atTime !== region.recordedAt)
+        return `<div class="pu-age">Observado em ${fmtDateTime(region.atTime)}</div>`;
+    if (!region.recordedAt)
+        return "";
     return `<div class="pu-age">Dado de ${agoText(region.recordedAt, now)} (${fmtClock(region.recordedAt)})</div>`;
 }
-
 function cell(iconName, label, value, unit) {
     return `<div class="pu-cell">${icon(iconName, "pu-cell-icon")}<div class="pu-cell-l">${label}</div>` +
         `<div class="pu-cell-v">${value}<span class="pu-cell-u"> ${unit}</span></div></div>`;
 }
-
 function nextHours(region, thresholds, now, model) {
-    if (region.isSample || region.kind === "forecast") return "";
+    if (region.isSample || region.kind === "forecast")
+        return "";
     const concern = forecastConcern(region, thresholds, now);
     const n = nowcastText(region.nowcast, model);
     const parts = [];
-    if (concern) parts.push(`<strong class="lvl-${concern.danger.level}">${concern.danger.label}</strong> previsto ${concern.hoursAhead <= 1 ? "na próxima hora" : `em até ${concern.hoursAhead} h`} (${fmt1(concern.point.rain)} mm/h)`);
-    if (n) parts.push(`${n.alert ? "<strong>Atenção:</strong> " : ""}${escapeHtml(n.headline)} <span class="pu-note">— modelo experimental</span>`);
-    if (!parts.length) return "";
+    if (concern)
+        parts.push(`<strong class="lvl-${concern.danger.level}">${concern.danger.label}</strong> previsto ${concern.hoursAhead <= 1 ? "na próxima hora" : `em até ${concern.hoursAhead} h`} (${fmt1(concern.point.rain)} mm/h)`);
+    if (n)
+        parts.push(`${n.alert ? "<strong>Atenção:</strong> " : ""}${escapeHtml(n.headline)} <span class="pu-note">— modelo experimental</span>`);
+    if (!parts.length)
+        return "";
     return `<div class="pu-next"><div class="pu-next-h">Próximas 3 h</div>${parts.map(p => `<div>${p}</div>`).join("")}</div>`;
 }
-
-/**
- * Popup de uma região. `region` pode estar deslocada na linha do tempo (kind/atTime).
- */
 export function regionPopup(region, thresholds, { now = Date.now(), approximate = false, model = null } = {}) {
     const d = levelOf(region, thresholds);
     const sample = !!region.isSample;
@@ -72,7 +72,6 @@ export function regionPopup(region, thresholds, { now = Date.now(), approximate 
         ${sample ? "" : `<button type="button" class="pu-details" data-action="details" data-region="${region.id}">Ver detalhes e gráficos</button>`}
     </div>`;
 }
-
 /**
  * Popup de um ponto (busca ou "minha localização"): nome/endereço (texto escapado) +
  * nível da subprefeitura em que o ponto está, ou a região monitorada mais próxima.
@@ -95,13 +94,15 @@ export function searchPopup({ title, address, place, region, thresholds, now, mo
             <div class="ps-note">Nível da subprefeitura, não uma medição exata deste endereço.</div>
             ${dataAge(region, now)}
         </div>`;
-    } else if (place && region) {
+    }
+    else if (place && region) {
         const d = levelOf(region, thresholds);
         body = `<div class="ps-risk ps-outside">
             <div class="ps-where"><strong>Fora da área monitorada.</strong> O ClimaSP cobre só 4 subprefeituras da Zona Norte.</div>
             <div class="ps-note">Região monitorada mais próxima: ${escapeHtml(region.short)} (${fmt1(place.distanceKm)} km) — nível ${region.isSample ? "de exemplo" : d.label.toLowerCase()}.</div>
         </div>`;
-    } else {
+    }
+    else {
         body = '<div class="ps-risk"><div class="ps-note">Dados das regiões ainda não carregados.</div></div>';
     }
     return `<div class="pu ps">

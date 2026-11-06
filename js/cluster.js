@@ -2,11 +2,8 @@
  * Agrupamento simples de marcadores por grade de pixels (sem plugin).
  * Pontos próximos na tela viram um "cluster" com contagem; clicar aproxima o mapa.
  */
-const L = window.L;
-
 export function clusterLayer(map, points, { iconFor, popupFor, titleFor, clusterIcon, gridPx = 56 }) {
     const group = L.layerGroup();
-
     function render() {
         group.clearLayers();
         const zoom = map.getZoom();
@@ -14,7 +11,8 @@ export function clusterLayer(map, points, { iconFor, popupFor, titleFor, cluster
         for (const p of points) {
             const px = map.project([p.lat, p.lng], zoom);
             const key = `${Math.floor(px.x / gridPx)}:${Math.floor(px.y / gridPx)}`;
-            if (!buckets.has(key)) buckets.set(key, []);
+            if (!buckets.has(key))
+                buckets.set(key, []);
             buckets.get(key).push(p);
         }
         for (const members of buckets.values()) {
@@ -32,19 +30,20 @@ export function clusterLayer(map, points, { iconFor, popupFor, titleFor, cluster
             const label = `${members.length} itens agrupados — clique para aproximar`;
             L.marker([lat, lng], { icon: clusterIcon(members), title: label, alt: label })
                 .on("click", () => {
-                    if (bounds.getNorthEast().equals(bounds.getSouthWest())) map.setView(bounds.getCenter(), Math.min(zoom + 3, map.getMaxZoom()));
-                    else map.fitBounds(bounds.pad(0.3), { maxZoom: Math.min(zoom + 4, map.getMaxZoom()) });
-                })
+                if (bounds.getNorthEast().equals(bounds.getSouthWest()))
+                    map.setView(bounds.getCenter(), Math.min(zoom + 3, map.getMaxZoom()));
+                else
+                    map.fitBounds(bounds.pad(0.3), { maxZoom: Math.min(zoom + 4, map.getMaxZoom()) });
+            })
                 .addTo(group);
         }
     }
-
     group.on("add", () => { render(); map.on("zoomend", render); });
     group.on("remove", () => map.off("zoomend", render));
-    group.setPoints = next => { points = next; if (map.hasLayer(group)) render(); };
+    group.setPoints = (next) => { points = next; if (map.hasLayer(group))
+        render(); };
     return group;
 }
-
 /** Ícone de marcador com símbolo SVG do sprite. */
 export function svgPin(symbol, kind, label = "") {
     return L.divIcon({
@@ -55,7 +54,6 @@ export function svgPin(symbol, kind, label = "") {
         popupAnchor: [0, -14],
     });
 }
-
 export function clusterPin(members, symbolFor) {
     const kinds = [...new Set(members.map(m => m.kind))];
     const symbol = kinds.length === 1 ? symbolFor(members[0]) : "layers";

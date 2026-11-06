@@ -33,7 +33,12 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: e2e/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            e2e/package-lock.json
+      # TypeScript: tipos sem erro e js/ (versionado) idêntico ao que src/*.ts gera.
+      - run: npm ci && npm run check:build
+        working-directory: .
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --grep-invert @screenshot

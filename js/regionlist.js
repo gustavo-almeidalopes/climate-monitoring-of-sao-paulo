@@ -6,20 +6,17 @@ import { dataTable, rainBars, riskLine, sparkline } from "./charts.js";
 import { icon } from "./icons.js";
 import { agoText, forecastConcern, modelQualityText, nowcastText, trendInfo } from "./insights.js";
 import { DEFAULT_RISK_CUTS, levelOf, sortByDanger } from "./risk.js";
-import { effectiveThresholds, store } from "./state.js";
+import { effectiveThresholds, regionList, store } from "./state.js";
 import { $, escapeHtml, fmt1, fmtClock } from "./util.js";
-
-let onFocusRegion = () => {};
+let onFocusRegion = () => { };
 const STALE_MS = 10 * 60_000;
-
 /** O mapa registra aqui como centralizar uma região (evita dependência circular). */
 export function setFocusHandler(fn) { onFocusRegion = fn; }
-
 function badge(d, sample) {
-    if (sample) return '<span class="pu-badge sample">Exemplo</span>';
+    if (sample)
+        return '<span class="pu-badge sample">Exemplo</span>';
     return `<span class="pu-badge ${d.level}">${d.label}</span>`;
 }
-
 function rowHtml(region, d, state) {
     const sample = state.source === "sample";
     const tr = trendInfo(region, state.now);
@@ -45,17 +42,18 @@ function rowHtml(region, d, state) {
         </button>
     </li>`;
 }
-
 function renderList() {
     const state = store.get();
     const thresholds = effectiveThresholds(state);
     const list = $("#regionList");
-    const sorted = sortByDanger(Object.values(state.regions), thresholds);
-    if (!sorted.length) { list.innerHTML = ""; return; }
+    const sorted = sortByDanger(regionList(state.regions), thresholds);
+    if (!sorted.length) {
+        list.innerHTML = "";
+        return;
+    }
     list.innerHTML = sorted.map(({ region, danger }) => rowHtml(region, danger, state)).join("");
     $("#rlCount").textContent = String(sorted.length);
 }
-
 function nowcastBlock(region, state) {
     const n = nowcastText(region.nowcast, state.model);
     if (!n) {
@@ -71,24 +69,26 @@ function nowcastBlock(region, state) {
         <p class="next3-quality">${escapeHtml(n.quality)}</p>
     </div>`;
 }
-
 function forecastNextHours(region, state) {
     const thresholds = effectiveThresholds(state);
     const next = (region.series || []).filter(p => p.kind === "forecast" && p.t > state.now - 1_800_000).slice(0, 3);
-    if (!next.length) return "";
+    if (!next.length)
+        return "";
     return `<ul class="next3-hours">${next.map(p => {
         const d = levelOf(p, thresholds);
         return `<li><span>${fmtClock(p.t)}</span><span>${fmt1(p.rain)} mm/h</span><span class="lvl-${d.level}"><span class="lvl-dot lvl-${d.level}" aria-hidden="true"></span>${d.label}</span></li>`;
     }).join("")}</ul><p class="next3-src">Chuva prevista hora a hora (Open-Meteo).</p>`;
 }
-
 function renderDetail() {
     const state = store.get();
     const view = $("#regionDetail");
     const id = state.selectedRegion;
     const region = id ? state.regions[id] : null;
     $("#sidePanel").classList.toggle("show-detail", !!region);
-    if (!region) { view.innerHTML = ""; return; }
+    if (!region) {
+        view.innerHTML = "";
+        return;
+    }
     const thresholds = effectiveThresholds(state);
     const d = levelOf(region, thresholds);
     const sample = state.source === "sample";
@@ -97,7 +97,7 @@ function renderDetail() {
     // preserva estado de leitura entre redesenhos (atualização automática)
     const tableOpen = !!view.querySelector(".chart-table[open]");
     const scroll = view.dataset.region === id ? $("#sidePanel .side-scroll").scrollTop : 0;
-    const focusedId = view.contains(document.activeElement) ? document.activeElement.id : null;
+    const focusedId = document.activeElement && view.contains(document.activeElement) ? document.activeElement.id : null;
     view.innerHTML = `
         <button type="button" class="rd-back" id="rdBack">${icon("chevron-left")} Todas as regiões</button>
         <div class="rd-head lvl-${sample ? "sample" : d.level}">
@@ -120,37 +120,47 @@ function renderDetail() {
         ${state.hasSeries ? dataTable(region.series, thresholds) : ""}
         <p class="rd-model">${escapeHtml(modelQualityText(state.model))}</p>`}
     `;
-    if (tableOpen) { const t = view.querySelector(".chart-table"); if (t) t.open = true; }
+    if (tableOpen) {
+        const t = view.querySelector(".chart-table");
+        if (t)
+            t.open = true;
+    }
     $("#sidePanel .side-scroll").scrollTop = scroll;
-    if (focusedId) { const el = document.getElementById(focusedId); if (el) el.focus({ preventScroll: true }); }
-    view.dataset.region = id;
+    if (focusedId) {
+        const el = document.getElementById(focusedId);
+        if (el)
+            el.focus({ preventScroll: true });
+    }
+    view.dataset.region = id ?? "";
     $("#rdBack").addEventListener("click", () => {
         store.set({ selectedRegion: null });
         const row = document.querySelector(`.rl-row[data-region="${id}"]`);
-        if (row) row.focus();
+        if (row)
+            row.focus();
     });
 }
-
 export function selectRegion(id, { focusMap = true } = {}) {
-    if (store.get().sideTab === "ops") document.getElementById("tabRegions")?.click();
+    if (store.get().sideTab === "ops")
+        document.getElementById("tabRegions")?.click();
     store.set({ selectedRegion: id });
     setDrawer(true);
-    if (focusMap) onFocusRegion(id);
-    requestAnimationFrame(() => { const t = $("#rdTitle"); if (t) t.focus(); });
+    if (focusMap)
+        onFocusRegion(id);
+    requestAnimationFrame(() => { const t = $("#rdTitle"); if (t)
+        t.focus(); });
 }
-
 export function setDrawer(open) {
     const panel = $("#sidePanel");
     panel.classList.toggle("open", open);
     // a gaveta precisa ficar acima do veredito/cabeçalho no celular
-    panel.closest(".map-wrap").classList.toggle("drawer-open", open);
+    panel.closest(".map-wrap")?.classList.toggle("drawer-open", open);
     $("#btnRegions").setAttribute("aria-expanded", String(open));
 }
-
 export function initRegionList() {
     $("#regionList").addEventListener("click", e => {
         const row = e.target.closest(".rl-row");
-        if (row) selectRegion(row.dataset.region);
+        if (row)
+            selectRegion(row.dataset.region);
     });
     $("#btnRegions").addEventListener("click", () => setDrawer(!$("#sidePanel").classList.contains("open")));
     $("#sideClose").addEventListener("click", () => { setDrawer(false); $("#btnRegions").focus(); });

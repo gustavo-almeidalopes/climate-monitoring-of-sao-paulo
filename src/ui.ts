@@ -1,0 +1,85 @@
+/* Peças de interface sem estado de domínio: toast, tela de carregamento, anúncios. */
+import { icon } from "./icons.js";
+import { $ } from "./util.js";
+
+const LOADING_STATES = {
+    init: { text: "Carregando mapa e dados…", sub: "Conectando ao servidor do ClimaSP", icon: "cloud-rain" },
+    weather: { text: "Lendo dados climáticos…", sub: "Chuva, temperatura e risco por subprefeitura", icon: "thermometer" },
+    map: { text: "Montando o mapa…", sub: "Carregando camadas do mapa base", icon: "map" },
+    districts: { text: "Desenhando as regiões…", sub: "Perímetros dos distritos monitorados", icon: "layers" },
+};
+
+export function setLoadingState(state) {
+    const msg = LOADING_STATES[state] || LOADING_STATES.init;
+    $("#loadingMsg").textContent = msg.text;
+    $("#mapLoading .load-sub").textContent = msg.sub;
+    $("#mapLoading .load-logo").innerHTML = icon(msg.icon);
+}
+
+export function hideLoading() {
+    $("#mapLoading").hidden = true;
+}
+
+export function showMapError() {
+    $("#mapLoading").hidden = true;
+    $("#mapError").hidden = false;
+}
+
+export function showToast(message) {
+    $("#toastMsg").textContent = message;
+    $("#toast").classList.add("show");
+}
+
+export function hideToast() {
+    $("#toast").classList.remove("show");
+}
+
+/** Texto para leitores de tela (região aria-live="assertive"). */
+export function announce(message) {
+    const node = $("#srAnnouncer");
+    node.textContent = "";
+    // reatribuir num próximo quadro garante que a mesma frase seja lida de novo
+    requestAnimationFrame(() => { node.textContent = message; });
+}
+
+/**
+ * Controle deslizante no estilo iOS: a parte já percorrida do trilho fica na cor de destaque.
+ * O navegador não pinta isso sozinho, então a fração vai numa variável CSS (--fill).
+ * Chame depois de mudar `value` por código; mudanças do usuário são tratadas em initUi.
+ */
+export function paintRange(input) {
+    if (!input) return;
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const pct = max > min ? ((Number(input.value) - min) / (max - min)) * 100 : 0;
+    input.style.setProperty("--fill", `${Math.min(100, Math.max(0, pct))}%`);
+}
+
+export function initUi() {
+    document.querySelectorAll('input[type="range"]').forEach(paintRange);
+    document.addEventListener("input", e => {
+        if (e.target instanceof HTMLInputElement && e.target.type === "range") paintRange(e.target);
+    });
+    $("#toastClose").addEventListener("click", hideToast);
+    $("#btnRetryMap").addEventListener("click", () => window.location.reload());
+
+    // Painel de camadas: recolhido por padrão (exceto em telas muito largas) para não cobrir o mapa.
+    const panel = $("#controlPanel");
+    const toggle = $("#cpToggle");
+    const setCollapsed = collapsed => {
+        panel.classList.toggle("collapsed", collapsed);
+        toggle.setAttribute("aria-expanded", String(!collapsed));
+    };
+    setCollapsed(!window.matchMedia("(min-width: 1600px)").matches);
+    toggle.addEventListener("click", () => setCollapsed(!panel.classList.contains("collapsed")));
+
+    // Legenda: recolhível; começa fechada (uma pílula com a escala de cores) exceto em telas muito largas.
+    const legend = $("#floodLegend");
+    const legToggle = $("#legToggle");
+    const setLegend = open => {
+        legend.classList.toggle("collapsed", !open);
+        legToggle.setAttribute("aria-expanded", String(open));
+    };
+    setLegend(window.matchMedia("(min-width: 1600px)").matches);
+    legToggle.addEventListener("click", () => setLegend(legend.classList.contains("collapsed")));
+}

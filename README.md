@@ -25,8 +25,22 @@ Backend em FastAPI para monitoramento climatico de regioes de Sao Paulo.
 
 ## Front-end (painel)
 
-Site estático, sem build: `index.html` (marcação + sprite de ícones SVG), `styles.css`, `config.js` e
-módulos ES nativos em `js/`. É o mesmo conjunto publicado na Vercel e servido pelo FastAPI em `/`.
+Site estático: `index.html` (marcação + sprite de ícones SVG), `styles.css`, `config.js` e
+módulos ES em `js/`. É o mesmo conjunto publicado na Vercel e servido pelo FastAPI em `/`.
+
+**TypeScript** — o código-fonte fica em `src/*.ts` (modo `strict`, tipos de domínio em
+`src/types.ts`, Leaflet global tipado em `src/globals.d.ts`). `npm run build` gera `js/*.js` com o
+`tsc`, um arquivo por módulo, sem bundler. O `js/` gerado é versionado, para o FastAPI e o deploy
+estático funcionarem sem etapa de build; o CI roda `npm run check:build` e falha se `js/` não
+corresponder a `src/`. A Vercel recompila na publicação (`vercel.json`).
+
+```bash
+npm ci
+npm run build      # src/*.ts -> js/*.js
+npm run watch      # recompila a cada arquivo salvo
+```
+
+Na tabela abaixo, `js/x.js` é gerado de `src/x.ts`; edite sempre o `.ts`.
 
 | Módulo | Papel |
 |---|---|

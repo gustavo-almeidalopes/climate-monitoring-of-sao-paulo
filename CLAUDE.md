@@ -1,10 +1,11 @@
 # ClimaSP — guia para o Claude Code
 
 Painel de risco de alagamento da Zona Norte de São Paulo. Backend FastAPI em `app/`; front-end
-web estático sem build (`index.html`, `styles.css`, `config.js`, módulos ES em `js/`).
-Interface em português do Brasil. Preserve a arquitetura: estado central em `js/store.js` +
-`js/state.js`, cada módulo assina o que exibe; critério único de nível em `app/core/risk_levels.py`
-espelhado em `js/risk.js`.
+web estático (`index.html`, `styles.css`, `config.js`) com código em **TypeScript** (`src/*.ts`)
+compilado pelo `tsc` para módulos ES em `js/` (versionado; `npm run build`). Edite sempre `src/`,
+nunca `js/`. Interface em português do Brasil. Preserve a arquitetura: estado central em
+`src/store.ts` + `src/state.ts`, cada módulo assina o que exibe; critério único de nível em
+`app/core/risk_levels.py` espelhado em `src/risk.ts`.
 
 ## Regras do projeto
 - Não inventar dados geográficos ou de equipes: fonte real verificada (registrar em
