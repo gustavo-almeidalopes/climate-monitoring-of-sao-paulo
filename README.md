@@ -1,6 +1,94 @@
-# ClimaSP Backend
+# ClimaSP
 
-Backend em FastAPI para monitoramento climatico de regioes de Sao Paulo.
+Monitoramento de chuva e risco de alagamento na Zona Norte de São Paulo, com painel web
+(PWA), alertas ativos e ferramentas de operação para as equipes de campo.
+
+## Arquitetura
+
+| Camada | Tecnologia | Onde | Por quê |
+|---|---|---|---|
+| Painel web | **TypeScript** (strict) + Leaflet, sem framework | `src/` (gera `js/`) | Tipos evitam erro num painel de emergência; mantém o deploy estático |
+| PWA | manifesto + service worker | `manifest.webmanifest`, `sw.js` | Instalável, abre sem rede, recebe notificações |
+| Clima, previsão e ML | **Python** (FastAPI, scikit-learn) | `app/` | Ecossistema de dados (ERA5, pandas) |
+| Modelo para outros runtimes | **ONNX** | `models/*.onnx` | Previsão em Java, .NET ou JS sem Python em produção |
+| Equipes, ocorrências, rotas | **Java 21 + Spring Boot** | `services/ops-java/` | Stack comum em TI pública; GraphHopper embutido |
+| Dados geográficos | **PostgreSQL + PostGIS** | `services/ops-java` (Flyway) | Consultas espaciais com índice (zonas, raio, ponto em área de risco) |
+| Alertas | Web Push (VAPID) + **WhatsApp** Business Cloud API | `app/services/alert_service.py` | Onde as pessoas estão |
+| Implantação | Docker Compose, Kubernetes, GHCR | `docker-compose.yml`, `deploy/` | Um comando local; manifestos para órgão público |
+
+A migração para Java segue o **padrão strangler**: o serviço novo roda ao lado do Python e o
+gateway (`deploy/nginx.conf`) manda para ele só `/api/v1/ops/*` e `/api/v1/geo/*`. O contrato JSON
+é o mesmo dos dois lados, e os testes de cada lado verificam isso. Clima e ML continuam em Python.
+Para voltar a operação ao Python, basta tirar dois blocos do gateway.
+
+### Rodar tudo (Docker)
+
+```bash
+cp deploy/secrets.env.example .env      # preencha OPERATOR_TOKEN, MANAGER_TOKEN etc. (fora do git)
+docker compose up --build
+```
+
+- Painel e API ficam em http://localhost:8080.
+- A documentação do Python fica em `/docs` e a do Java em `/api/v1/ops-java/docs`. O OpenAPI do
+  Python também está versionado em `docs/api/openapi.json`.
+- Para rotas por ruas com o GraphHopper, coloque um extrato do OpenStreetMap em `deploy/osm/` e
+  defina `OSM_FILE` (ver `services/ops-java/README.md`).
+
+### Kubernetes
+
+```bash
+cp deploy/secrets.env.example deploy/secrets.env   # preencha; o arquivo fica fora do git
+kubectl apply -k deploy
+```
+
+O pacote inclui:
+
+- PostGIS em StatefulSet;
+- o backend Python;
+- o serviço Java, com HPA de 2 a 8 réplicas para dias de temporal;
+- o gateway e o ingress (troque o host).
+
+As imagens saem do GHCR, publicadas pelo `.github/workflows/images.yml` a cada push na `main`.
+
+## Alertas ativos (Web Push e WhatsApp)
+
+Quando o nível unificado de uma região **sobe** para Alto ou Crítico, quem se inscreveu é avisado.
+Repetir o mesmo nível não reenvia; uma queda "rearma" o alerta. Dado de exemplo nunca gera alerta.
+Cada canal fica desligado até ser configurado, e o painel diz o que falta.
+
+- **Web Push (PWA)**
+  1. Gere as chaves com `python scripts/generate_vapid_keys.py`.
+  2. Defina `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT` no servidor.
+
+  No painel, a pessoa toca no sino e em "Ativar notificações", escolhendo as regiões e o nível. No
+  iPhone (iOS 16.4 ou mais novo), é preciso antes adicionar o ClimaSP à Tela de Início.
+- **WhatsApp (Meta Business Cloud API)**: exige uma conta Meta Business verificada e um número
+  dedicado. Passos:
+  1. No app da Meta, configure o webhook em `https://SEU_DOMINIO/api/v1/alerts/whatsapp/webhook`,
+     com o mesmo `WHATSAPP_VERIFY_TOKEN`.
+  2. Assine o campo `messages`.
+  3. Crie e aprove o modelo `alerta_alagamento` (categoria utilidade, idioma pt_BR) com 3
+     variáveis no corpo: *"Alerta ClimaSP: risco {{1}} em {{2}} ({{3}}). Evite áreas de
+     alagamento. Responda SAIR para não receber mais."*
+  4. Defina `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`,
+     `WHATSAPP_VERIFY_TOKEN` e `WHATSAPP_DISPLAY_NUMBER`.
+
+  As pessoas se inscrevem enviando o nome da região ("Santana", "todas", "Jaçanã crítico") e
+  cancelam com SAIR.
+- **LGPD**: só são guardados o endpoint do navegador ou o número, as regiões e o nível. SAIR ou
+  "Desativar" apaga a inscrição, e endpoints expirados são removidos sozinhos. Cada disparo fica
+  registrado em `alert_log` para auditoria, só com contagens e sem dados pessoais.
+
+## Modelo em ONNX
+
+O treino segue em Python. `python scripts/export_onnx.py` gera dois arquivos:
+
+- `models/flood_risk_classifier.onnx`, com a probabilidade de chuva forte;
+- `models/flood_risk_regressor.onnx`, com a chuva esperada em mm.
+
+O arquivo `models/flood_risk_model.onnx.json` traz a ordem das 33 variáveis e o limiar. O teste
+`tests/test_onnx_export.py` confere que o ONNX devolve os mesmos números do scikit-learn, e o
+workflow de treino exporta e confere a paridade a cada re-treino.
 
 ## Endpoints
 
