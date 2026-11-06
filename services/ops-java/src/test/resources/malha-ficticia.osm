@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<osm version="0.6" generator="climasp-teste: MALHA FICTICIA, nao representa ruas reais">
+  <node id="1" version="1" lat="-23.500000" lon="-46.640000"/>
+  <node id="2" version="1" lat="-23.500000" lon="-46.635000"/>
+  <node id="3" version="1" lat="-23.500000" lon="-46.630000"/>
+  <node id="4" version="1" lat="-23.500000" lon="-46.625000"/>
+  <node id="5" version="1" lat="-23.495000" lon="-46.640000"/>
+  <node id="6" version="1" lat="-23.495000" lon="-46.635000"/>
+  <node id="7" version="1" lat="-23.495000" lon="-46.630000"/>
+  <node id="8" version="1" lat="-23.495000" lon="-46.625000"/>
+  <node id="9" version="1" lat="-23.490000" lon="-46.640000"/>
+  <node id="10" version="1" lat="-23.490000" lon="-46.635000"/>
+  <node id="11" version="1" lat="-23.490000" lon="-46.630000"/>
+  <node id="12" version="1" lat="-23.490000" lon="-46.625000"/>
+  <node id="13" version="1" lat="-23.485000" lon="-46.640000"/>
+  <node id="14" version="1" lat="-23.485000" lon="-46.635000"/>
+  <node id="15" version="1" lat="-23.485000" lon="-46.630000"/>
+  <node id="16" version="1" lat="-23.485000" lon="-46.625000"/>
+  <way id="1" version="1"><nd ref="1"/><nd ref="2"/><nd ref="3"/><nd ref="4"/><tag k="highway" v="residential"/><tag k="name" v="Rua Fictícia 1"/></way>
+  <way id="2" version="1"><nd ref="5"/><nd ref="6"/><nd ref="7"/><nd ref="8"/><tag k="highway" v="primary"/><tag k="name" v="Rua Fictícia 2"/></way>
+  <way id="3" version="1"><nd ref="9"/><nd ref="10"/><nd ref="11"/><nd ref="12"/><tag k="highway" v="residential"/><tag k="name" v="Rua Fictícia 3"/></way>
+  <way id="4" version="1"><nd ref="13"/><nd ref="14"/><nd ref="15"/><nd ref="16"/><tag k="highway" v="residential"/><tag k="name" v="Rua Fictícia 4"/></way>
+  <way id="5" version="1"><nd ref="1"/><nd ref="5"/><nd ref="9"/><nd ref="13"/><tag k="highway" v="residential"/><tag k="name" v="Rua Fictícia 5"/></way>
+  <way id="6" version="1"><nd ref="2"/><nd ref="6"/><nd ref="10"/><nd ref="14"/><tag k="highway" v="residential"/><tag k="name" v="Rua Fictícia 6"/></way>
+  <way id="7" version="1"><nd ref="3"/><nd ref="7"/><nd ref="11"/><nd ref="15"/><tag k="highway" v="residential"/><tag k="name" v="Rua Fictícia 7"/></way>
+  <way id="8" version="1"><nd ref="4"/><nd ref="8"/><nd ref="12"/><nd ref="16"/><tag k="highway" v="residential"/><tag k="name" v="Rua Fictícia 8"/></way>
+</osm>

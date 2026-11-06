@@ -284,6 +284,31 @@ async def report(session: AsyncSession, *, hours: int) -> dict:
     """Relatório pós-evento da janela [agora − hours, agora]."""
     end = _now()
     start = end - timedelta(hours=hours)
+    context = await report_context(session, start=start, end=end)
+    incidents = (await session.scalars(select(Incident).where(Incident.opened_at > start))).all()
+    by_status = {s: 0 for s in INCIDENT_STATUSES}
+    for i in incidents:
+        by_status[i.status] = by_status.get(i.status, 0) + 1
+    minutes = lambda a, b: (_utc(b) - _utc(a)).total_seconds() / 60  # noqa: E731
+    dispatch = [minutes(i.opened_at, i.assigned_at) for i in incidents if i.assigned_at]
+    arrival = [minutes(i.opened_at, i.arrived_at) for i in incidents if i.arrived_at]
+    resolution = [minutes(i.opened_at, i.resolved_at) for i in incidents if i.resolved_at]
+    return {
+        "start": start, "end": end, "hours": hours,
+        "rain": context["rain"],
+        "incidents": {"total": len(incidents), "by_status": by_status,
+                      "mean_minutes_to_dispatch": _mean(dispatch), "mean_minutes_to_arrival": _mean(arrival),
+                      "mean_minutes_to_resolution": _mean(resolution)},
+        "model": context["model"],
+    }
+
+
+async def report_context(session: AsyncSession, *, start: datetime, end: datetime) -> dict:
+    """Parte do relatório que depende dos dados de clima e do modelo (donos: este backend).
+
+    O serviço Java de operação (services/ops-java) busca isto em /api/v1/ops/report/context e
+    junta com os indicadores de ocorrências, que passam a ser dele.
+    """
 
     rain: dict[str, dict] = {}
     rows = (await session.execute(
@@ -302,15 +327,6 @@ async def report(session: AsyncSession, *, hours: int) -> dict:
         for code, avg, count in rows:
             rain[code] = {"total_mm": round(float(avg or 0.0) * hours, 1), "hours": None,
                           "source": "estimativa: média das leituras × horas (sem série horária)"}
-
-    incidents = (await session.scalars(select(Incident).where(Incident.opened_at > start))).all()
-    by_status = {s: 0 for s in INCIDENT_STATUSES}
-    for i in incidents:
-        by_status[i.status] = by_status.get(i.status, 0) + 1
-    minutes = lambda a, b: (_utc(b) - _utc(a)).total_seconds() / 60  # noqa: E731
-    dispatch = [minutes(i.opened_at, i.assigned_at) for i in incidents if i.assigned_at]
-    arrival = [minutes(i.opened_at, i.arrived_at) for i in incidents if i.arrived_at]
-    resolution = [minutes(i.opened_at, i.resolved_at) for i in incidents if i.resolved_at]
 
     logs = (await session.scalars(select(NowcastLog).where(NowcastLog.as_of > start))).all()
     tp = fp = fn = tn = 0
@@ -340,14 +356,7 @@ async def report(session: AsyncSession, *, hours: int) -> dict:
         "recall": round(tp / (tp + fn), 3) if tp + fn else None,
         "note": None if evaluated else "Sem previsões do modelo verificáveis nesta janela (registro começa com esta versão).",
     }
-    return {
-        "start": start, "end": end, "hours": hours,
-        "rain": rain,
-        "incidents": {"total": len(incidents), "by_status": by_status,
-                      "mean_minutes_to_dispatch": _mean(dispatch), "mean_minutes_to_arrival": _mean(arrival),
-                      "mean_minutes_to_resolution": _mean(resolution)},
-        "model": model,
-    }
+    return {"start": start, "end": end, "rain": rain, "model": model}
 
 
 def validate_kind(kind: str) -> str:

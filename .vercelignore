@@ -7,3 +7,4 @@ e2e/
 docs/
 *.py
 requirements*.txt
+node_modules/

@@ -67,6 +67,7 @@ async def lifespan(_: FastAPI):
                 history_retention_days=settings.history_retention_days,
                 forecast_retention_hours=settings.forecast_retention_hours,
             )
+            await scheduler.notify_level_rises(session)
         except Exception:
             pass
 
@@ -133,3 +134,18 @@ async def frontend_config() -> FileResponse:
 
 
 app.mount("/js", StaticFiles(directory=str(BASE_DIR / "js")), name="frontend-js")
+
+
+# PWA (Fase 4): manifesto, service worker (na raiz, para controlar o painel inteiro) e ícones.
+@app.get("/manifest.webmanifest", include_in_schema=False)
+async def pwa_manifest() -> FileResponse:
+    return FileResponse(str(BASE_DIR / "manifest.webmanifest"), media_type="application/manifest+json")
+
+
+@app.get("/sw.js", include_in_schema=False)
+async def pwa_service_worker() -> FileResponse:
+    # sem cache HTTP: o navegador precisa ver a versão nova do service worker
+    return FileResponse(str(BASE_DIR / "sw.js"), media_type="text/javascript", headers={"Cache-Control": "no-cache"})
+
+
+app.mount("/icons", StaticFiles(directory=str(BASE_DIR / "icons")), name="pwa-icons")

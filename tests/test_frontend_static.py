@@ -68,7 +68,9 @@ _EMOJI = re.compile(
 
 @pytest.mark.parametrize(
     "path",
-    ["index.html", "styles.css", "config.js", *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "js").glob("*.js"))],
+    ["index.html", "styles.css", "config.js", "sw.js", "manifest.webmanifest",
+     *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "js").glob("*.js")),
+     *sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "src").glob("*.ts"))],
 )
 def test_frontend_sem_emojis(path: str) -> None:
     """Interface só com texto e ícones SVG do sprite: nenhum emoji no código do front-end."""
@@ -77,12 +79,37 @@ def test_frontend_sem_emojis(path: str) -> None:
     assert not found, f"{path}: {found}"
 
 
-@pytest.mark.parametrize("path", ["app", "scripts"])
+@pytest.mark.parametrize("path", ["app", "scripts", "services"])
 def test_backend_e_scripts_sem_emojis(path: str) -> None:
     """Mensagens do servidor e dos scripts (inclusive os do Simulador iOS) sem emojis."""
     allowed = {"scripts/build_geodata.py"}  # gera docs/fase-2/fontes.md; alterar dispara nova coleta
     for file in sorted((ROOT / path).rglob("*")):
-        if file.suffix not in {".py", ".sh"} or file.relative_to(ROOT).as_posix() in allowed:
+        if file.suffix not in {".py", ".sh", ".java", ".sql", ".yml"} or file.relative_to(ROOT).as_posix() in allowed \
+                or "target" in file.parts:
             continue
         found = sorted({m.group() for m in _EMOJI.finditer(file.read_text(encoding="utf-8"))})
         assert not found, f"{file.relative_to(ROOT)}: {found}"
+
+
+def test_typescript_compilado_em_js() -> None:
+    """Cada módulo src/*.ts tem o js/*.js correspondente (gerado por `npm run build`) e vice-versa."""
+    ts = {p.stem for p in (ROOT / "src").glob("*.ts") if not p.name.endswith(".d.ts")}
+    js = {p.stem for p in (ROOT / "js").glob("*.js")}
+    assert ts == js, f"rode `npm run build`: só em src {sorted(ts - js)}, só em js {sorted(js - ts)}"
+
+
+def test_service_worker_guarda_todos_os_modulos_e_arquivos_do_pwa(client: TestClient) -> None:
+    """O PWA abre sem rede: o sw.js pré-carrega cada módulo de js/ e os arquivos do app shell."""
+    sw = (ROOT / "sw.js").read_text(encoding="utf-8")
+    cached = set(re.findall(r'"(js/[\w-]+\.js)"', sw))
+    assert cached == {f"js/{p.name}" for p in (ROOT / "js").glob("*.js")}, "atualize a lista SHELL do sw.js"
+    for path in ("manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"):
+        assert f'"{path}"' in sw and (ROOT / path).exists()
+    assert client.get("/sw.js").headers["cache-control"] == "no-cache"
+    assert client.get("/manifest.webmanifest").headers["content-type"].startswith("application/manifest+json")
+    assert client.get("/icons/icon-192.png").status_code == 200
+    import json
+    manifest = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
+    assert manifest["lang"] == "pt-BR" and manifest["display"] == "standalone"
+    assert {"192x192", "512x512"} <= {i["sizes"] for i in manifest["icons"]}
+    assert any(i.get("purpose") == "maskable" for i in manifest["icons"])

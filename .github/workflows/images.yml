@@ -1,0 +1,42 @@
+name: Imagens (GHCR)
+
+# Publica as imagens usadas pelo docker compose e pelos manifestos Kubernetes (deploy/):
+#   ghcr.io/<dono>/climasp-api   (FastAPI + painel)
+#   ghcr.io/<dono>/climasp-ops   (serviço Java de operação)
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - name: climasp-api
+            dockerfile: Dockerfile
+          - name: climasp-ops
+            dockerfile: services/ops-java/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: owner
+        run: echo "lc=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ghcr.io/${{ steps.owner.outputs.lc }}/${{ matrix.name }}:latest
+            ghcr.io/${{ steps.owner.outputs.lc }}/${{ matrix.name }}:${{ github.sha }}

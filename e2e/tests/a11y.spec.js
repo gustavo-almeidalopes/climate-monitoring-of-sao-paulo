@@ -75,3 +75,27 @@ for (const theme of ["light", "dark"]) {
         expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
     });
 }
+
+for (const theme of ["light", "dark"]) {
+    test(`axe sem violações sérias · alertas no celular (Web Push e WhatsApp) · tema ${theme}`, async ({ page }) => {
+        await page.addInitScript(t => localStorage.setItem("climasp_theme", t), theme);
+        await mockNetwork(page, { alerts: { web_push: true, vapid_public_key: "BExemplo", whatsapp: true, whatsapp_number: "+55 11 99999-0000" } });
+        await page.goto("/index.html");
+        await expect(page.locator("#mapLoading")).toBeHidden({ timeout: 15_000 });
+        await page.locator("#btnAlerts").click();
+        await expect(page.locator("#alertSubscribe")).toBeVisible();
+        await page.waitForTimeout(300);
+        const results = await new AxeBuilder({ page }).include("#alertHistory")
+            .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+        const serious = results.violations.filter(v => v.impact === "serious" || v.impact === "critical")
+            .map(v => ({ id: v.id, nodes: v.nodes.slice(0, 5).map(n => n.target.join(" ")) }));
+        expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        expect(overflow).toBeLessThanOrEqual(0);
+        // o painel inteiro dentro da tela (antes, no celular, saía pela borda esquerda)
+        const box = await page.locator("#alertHistory").boundingBox();
+        const width = page.viewportSize().width;
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(width);
+    });
+}

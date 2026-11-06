@@ -32,7 +32,7 @@ jobs:
           cache: pip
 
       - name: Instalar dependências
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       - name: Coletar dados reais e treinar
         env:
@@ -43,6 +43,11 @@ jobs:
           python scripts/collect_and_train.py --years "${{ github.event.inputs.years || '3' }}" 2>&1 | tee train.log
           { echo '```'; cat train.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Exportar para ONNX e conferir paridade
+        run: |
+          python scripts/export_onnx.py
+          pytest -q tests/test_onnx_export.py
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -50,13 +55,15 @@ jobs:
           path: |
             models/flood_risk_model.joblib
             models/flood_risk_model.json
+            models/flood_risk_*.onnx
+            models/flood_risk_model.onnx.json
             train.log
 
       - name: Versionar modelo treinado
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
-          git add -f models/flood_risk_model.joblib models/flood_risk_model.json
+          git add -f models/flood_risk_model.joblib models/flood_risk_model.json models/flood_risk_*.onnx models/flood_risk_model.onnx.json
           if git diff --cached --quiet; then echo "Sem mudanças no modelo"; exit 0; fi
           git commit -m "Modelo ML re-treinado com dados reais ($(jq -r .version models/flood_risk_model.json))"
           git push

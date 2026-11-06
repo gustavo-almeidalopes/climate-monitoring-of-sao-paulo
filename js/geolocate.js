@@ -4,15 +4,11 @@
  */
 import { icon } from "./icons.js";
 import { showToast } from "./ui.js";
-
-const L = window.L;
-
 const ERRORS = {
     1: "Permissão de localização negada. Ative-a nas configurações do navegador para usar este botão.",
     2: "Não foi possível obter sua localização agora.",
     3: "A localização demorou demais para responder. Tente de novo.",
 };
-
 export function initGeolocate(map, placePin) {
     let accuracyCircle = null;
     const Control = L.Control.extend({
@@ -31,16 +27,19 @@ export function initGeolocate(map, placePin) {
         },
     });
     new Control().addTo(map);
-
     function locate(btn) {
-        if (!("geolocation" in navigator)) { showToast("Este navegador não oferece localização."); return; }
+        if (!("geolocation" in navigator)) {
+            showToast("Este navegador não oferece localização.");
+            return;
+        }
         btn.classList.add("busy");
         btn.setAttribute("aria-busy", "true");
         navigator.geolocation.getCurrentPosition(pos => {
             btn.classList.remove("busy");
             btn.removeAttribute("aria-busy");
             const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-            if (accuracyCircle) map.removeLayer(accuracyCircle);
+            if (accuracyCircle)
+                map.removeLayer(accuracyCircle);
             accuracyCircle = L.circle([lat, lng], { radius: accuracy, className: "accuracy-circle", interactive: false }).addTo(map);
             placePin({ title: "Sua localização", address: `Precisão de ±${Math.round(accuracy)} m`, lat, lng }, { zoom: 15 });
         }, err => {

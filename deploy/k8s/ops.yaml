@@ -1,0 +1,60 @@
+# Serviço Java de operação (equipes, ocorrências, rotas, PostGIS). Sem estado local: escala
+# horizontalmente (HPA) em dia de temporal.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ops
+spec:
+  selector: { app: ops }
+  ports: [{ port: 8081, targetPort: 8081, name: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ops
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: ops }
+  template:
+    metadata:
+      labels: { app: ops }
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 10001 }
+      containers:
+        - name: ops
+          image: climasp-ops
+          ports: [{ containerPort: 8081, name: http }]
+          envFrom:
+            - configMapRef: { name: climasp-config }
+          env:
+            - { name: DATABASE_PASSWORD, valueFrom: { secretKeyRef: { name: climasp-secrets, key: DATABASE_PASSWORD } } }
+            - { name: OPERATOR_TOKEN, valueFrom: { secretKeyRef: { name: climasp-secrets, key: OPERATOR_TOKEN } } }
+            - { name: MANAGER_TOKEN, valueFrom: { secretKeyRef: { name: climasp-secrets, key: MANAGER_TOKEN } } }
+          startupProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { memory: 2Gi }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ops
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: ops }
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }

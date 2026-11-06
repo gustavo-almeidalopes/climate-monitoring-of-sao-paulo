@@ -1,0 +1,17 @@
+{
+  "name": "climasp-web",
+  "private": true,
+  "description": "Front-end do ClimaSP: TypeScript compilado para módulos ES em js/ (sem bundler; Leaflet global).",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check:build": "npm run build && git diff --exit-code -- js/ && test -z \"$(git status --porcelain -- js/)\""
+  },
+  "devDependencies": {
+    "@types/geojson": "7946.0.16",
+    "@types/leaflet": "1.9.20",
+    "typescript": "5.9.3"
+  }
+}

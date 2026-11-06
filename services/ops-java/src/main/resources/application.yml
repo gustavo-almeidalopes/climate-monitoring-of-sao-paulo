@@ -1,0 +1,53 @@
+# ClimaSP — serviço de operação. Toda configuração vem de variáveis de ambiente (12-factor).
+server:
+  port: ${PORT:8081}
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: climasp-ops
+  threads:
+    virtual:
+      enabled: true          # Java 21: uma virtual thread por requisição (chamadas de rota/HTTP bloqueantes baratas)
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/climasp}
+    username: ${DATABASE_USER:climasp}
+    password: ${DATABASE_PASSWORD:climasp}
+  flyway:
+    enabled: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /api/v1/ops-java/openapi.json
+  swagger-ui:
+    path: /api/v1/ops-java/docs
+
+climasp:
+  # Mesmos tokens do backend Python (perfis operador e gestor). Sem nenhum: 503 nas rotas de operação.
+  operator-token: ${OPERATOR_TOKEN:}
+  manager-token: ${MANAGER_TOKEN:}
+  seed-examples: ${OPS_SEED_EXAMPLES:true}
+  geo-data-dir: ${GEO_DATA_DIR:../../data/geo}
+  # Backend Python (clima e ML): o relatório pós-evento busca lá a chuva e o acerto do modelo.
+  python-base-url: ${PYTHON_API_URL:http://localhost:8000}
+  routing:
+    # auto: GraphHopper se houver OSM_FILE; senão OSRM se houver OSRM_URL; senão estimativa em linha reta.
+    engine: ${ROUTING_ENGINE:auto}
+    osm-file: ${OSM_FILE:}
+    graph-cache-dir: ${GRAPH_CACHE_DIR:graph-cache}
+    osrm-url: ${OSRM_URL:}

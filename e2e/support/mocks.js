@@ -145,6 +145,10 @@ export async function mockNetwork(page, opts = {}) {
         apiDown: opts.apiDown ?? false,
         nominatim: opts.nominatim ?? [],
         news: opts.news ?? { articles: [], total: 0, last_scraped_at: null },
+        // Fase 4: canais de alerta (padrão: nenhum configurado) e inscrições recebidas
+        alerts: opts.alerts ?? { web_push: false, vapid_public_key: null, whatsapp: false, whatsapp_number: null },
+        subscriptions: [],
+        apiAbort: opts.apiAbort ?? false,
         requests: [],
     };
 
@@ -177,6 +181,7 @@ export async function mockNetwork(page, opts = {}) {
     await page.route(/\/api\/v1\//, route => {
         const url = new URL(route.request().url());
         state.requests.push(url.pathname);
+        if (state.apiAbort) return route.abort("internetdisconnected"); // sem rede (não é erro do servidor)
         const down = typeof state.apiDown === "function" ? state.apiDown() : state.apiDown;
         if (down) return route.fulfill({ status: 503, body: "{}", contentType: "application/json" });
         const json = body => route.fulfill({ status: 200, body: JSON.stringify(body), contentType: "application/json" });
@@ -195,6 +200,13 @@ export async function mockNetwork(page, opts = {}) {
             return json(resolve(state.current) || currentPayload());
         }
         if (url.pathname.includes("/news")) return json(state.news);
+        if (url.pathname.endsWith("/alerts/channels")) return json(state.alerts);
+        if (url.pathname.endsWith("/alerts/push/subscribe")) {
+            const body = JSON.parse(route.request().postData() || "{}");
+            state.subscriptions.push(body);
+            return route.fulfill({ status: 201, body: JSON.stringify({ regions: body.regions, min_level: body.min_level }), contentType: "application/json" });
+        }
+        if (url.pathname.endsWith("/alerts/push/unsubscribe")) return json({ deleted: true });
         return route.fulfill({ status: 404, body: "{}", contentType: "application/json" });
     });
 
@@ -221,7 +233,7 @@ const kmBetween = (a, b) => {
  * API de operação simulada (estado em memória) + OSRM simulado.
  * Credenciais: "op-teste" é operador, "gestor-teste" é gestor; com `configured: false`, 503.
  */
-export async function mockOps(page, { configured = true, osrmDown = false } = {}) {
+export async function mockOps(page, { configured = true, osrmDown = false, serverNearest = false } = {}) {
     const now = () => new Date().toISOString();
     const db = {
         teams: OPS_TEAMS.map(t => ({ ...t, status: "disponivel", base_lat: t.lat, base_lng: t.lng, base_name: "base de teste",
@@ -277,6 +289,17 @@ export async function mockOps(page, { configured = true, osrmDown = false } = {}
             }
             inc.timeline.push({ at: now(), kind: m[2], team_id: inc.team_id, note: "", actor_role: role });
             return json(inc);
+        }
+        // Serviço Java (services/ops-java): só existe quando serverNearest = true; senão 404 como no FastAPI.
+        if (path === "/nearest" && serverNearest) {
+            const lat = Number(url.searchParams.get("lat")), lng = Number(url.searchParams.get("lng"));
+            const free = db.teams.filter(t => t.status === "disponivel");
+            const km = t => Math.hypot((t.lat - lat) * 111, (t.lng - lng) * 102);
+            const candidates = free.map(t => ({ team: t, minutes: km(t) * 2, estimated: false,
+                routes: [{ minutes: km(t) * 2, km: km(t) * 1.3, estimated: false,
+                    coords: [[t.lat, t.lng], [(t.lat + lat) / 2 + 0.002, (t.lng + lng) / 2], [lat, lng]] }] }))
+                .sort((a, b) => a.minutes - b.minutes).slice(0, Number(url.searchParams.get("limit") || 5));
+            return json({ source: "graphhopper", estimated: false, candidates });
         }
         if (path.startsWith("/report")) {
             return json({ start: now(), end: now(), hours: 24, rain: { ST: { total_mm: 31.5, hours: 24, source: "teste" } },

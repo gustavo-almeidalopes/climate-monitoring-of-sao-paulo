@@ -14,3 +14,6 @@ scikit-learn>=1.5.2,<2
 pandas>=2.2.3,<4
 numpy>=1.26.4,<3
 joblib>=1.4.2
+
+# Alertas: Web Push (PWA) com VAPID
+pywebpush==2.5.0

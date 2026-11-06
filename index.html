@@ -8,6 +8,15 @@
     <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
     <title>ClimaSP · Monitor de Alagamentos</title>
 
+    <!-- PWA: instalável na tela inicial (Android e iPhone), abre sem rede e recebe alertas -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ClimaSP">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
     <!-- Leaflet 1.9.4 com Subresource Integrity (hashes oficiais publicados em leafletjs.com) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
@@ -138,6 +147,25 @@
                         </div>
                         <ol class="ah-list" id="alertHistoryList"></ol>
                         <p class="ah-foot">Mudanças de nível observadas com dados reais, guardadas só neste navegador.</p>
+                        <section class="ah-subscribe" id="alertSubscribe" aria-labelledby="alertSubTitle">
+                            <h3 id="alertSubTitle">Receber alertas no celular</h3>
+                            <p class="ah-sub-note">Aviso quando o risco de alagamento subir, mesmo com o ClimaSP fechado.</p>
+                            <fieldset class="ah-regions">
+                                <legend>Regiões</legend>
+                                <label class="ah-chip"><input type="checkbox" name="alertRegion" value="CV" checked> Casa Verde</label>
+                                <label class="ah-chip"><input type="checkbox" name="alertRegion" value="ST" checked> Santana</label>
+                                <label class="ah-chip"><input type="checkbox" name="alertRegion" value="JT" checked> Jaçanã</label>
+                                <label class="ah-chip"><input type="checkbox" name="alertRegion" value="MG" checked> Vila Maria</label>
+                            </fieldset>
+                            <label class="ah-level-l" for="alertMinLevel">Avisar a partir de</label>
+                            <select id="alertMinLevel" class="ah-level">
+                                <option value="high">Alto (inclui Crítico)</option>
+                                <option value="critical">Só Crítico</option>
+                            </select>
+                            <button type="button" class="ah-sub-btn" id="alertSubBtn">Ativar notificações</button>
+                            <p class="ah-sub-status" id="alertSubStatus" role="status" aria-live="polite"></p>
+                            <p class="ah-whatsapp" id="alertWhatsapp" hidden></p>
+                        </section>
                     </section>
                 </div>
                 <button type="button" class="icon-btn" id="btnNews" title="Notícias de alagamento"

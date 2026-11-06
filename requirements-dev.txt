@@ -1,2 +1,7 @@
 -r requirements.txt
 pytest>=8
+
+# Exportação do modelo para ONNX (scripts/export_onnx.py) e teste de paridade
+skl2onnx==1.20.0
+onnx==1.23.2
+onnxruntime==1.31.1

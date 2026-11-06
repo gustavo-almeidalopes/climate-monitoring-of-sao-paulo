@@ -9,16 +9,13 @@ import { effectiveThresholds, store } from "./state.js";
 import { hideTooltip } from "./tooltips.js";
 import { hideToast, showToast } from "./ui.js";
 import { $, debounce, escapeHtml, normalizeName, storage } from "./util.js";
-
 const HISTORY_KEY = "climasp_search_history";
 const MAX_HISTORY = 5;
 const POPULAR = [
     "Marginal Tietê", "Av. Braz Leme", "Av. Cruzeiro do Sul", "Av. Guilherme Cotching",
     "Casa Verde", "Santana", "Tucuruvi", "Jaçanã", "Vila Maria", "Vila Guilherme",
 ];
-
 const norm = v => normalizeName(v).toLowerCase();
-
 export const SearchHistory = {
     get() {
         const list = storage.get(HISTORY_KEY, []);
@@ -26,7 +23,8 @@ export const SearchHistory = {
     },
     add(query) {
         const q = String(query || "").trim();
-        if (!q) return;
+        if (!q)
+            return;
         storage.set(HISTORY_KEY, [q, ...this.get().filter(h => norm(h) !== norm(q))].slice(0, MAX_HISTORY));
     },
     remove(query) {
@@ -42,7 +40,6 @@ export const SearchHistory = {
         ].slice(0, 6);
     },
 };
-
 function initSuggestions(onPick) {
     const input = $("#searchInput");
     const box = $("#searchSuggestions");
@@ -52,7 +49,6 @@ function initSuggestions(onPick) {
     // para a lista não reabrir sozinha depois que a busca já começou.
     let epoch = 0;
     let typedAt = 0;
-
     function close() {
         epoch++;
         box.classList.remove("show");
@@ -60,7 +56,6 @@ function initSuggestions(onPick) {
         input.removeAttribute("aria-activedescendant");
         activeIndex = -1;
     }
-
     function setActive(i) {
         const nodes = Array.from(box.querySelectorAll(".suggestion-item"));
         nodes.forEach(n => { n.classList.remove("active"); n.setAttribute("aria-selected", "false"); });
@@ -70,14 +65,17 @@ function initSuggestions(onPick) {
             nodes[i].setAttribute("aria-selected", "true");
             nodes[i].scrollIntoView({ block: "nearest" });
             input.setAttribute("aria-activedescendant", nodes[i].id);
-        } else {
+        }
+        else {
             input.removeAttribute("aria-activedescendant");
         }
     }
-
     function open(list) {
         items = list;
-        if (!items.length) { close(); return; }
+        if (!items.length) {
+            close();
+            return;
+        }
         box.innerHTML = items.map((sug, i) => {
             const safe = escapeHtml(sug.text);
             const drop = sug.kind === "history"
@@ -91,57 +89,77 @@ function initSuggestions(onPick) {
         input.setAttribute("aria-expanded", "true");
         activeIndex = -1;
     }
-
     const refresh = () => open(SearchHistory.suggest(input.value));
     const pick = value => { input.value = value; close(); onPick(); };
-
-    const refreshTyped = debounce(() => { if (typedAt === epoch) refresh(); }, 180);
+    const refreshTyped = debounce(() => { if (typedAt === epoch)
+        refresh(); }, 180);
     input.addEventListener("input", () => { typedAt = epoch; refreshTyped(); });
     input.addEventListener("focus", refresh);
     input.addEventListener("keydown", e => {
         const isOpen = box.classList.contains("show");
-        if (e.key === "ArrowDown" && !isOpen) { e.preventDefault(); refresh(); return; }
-        if (e.key === "Enter") {
+        if (e.key === "ArrowDown" && !isOpen) {
             e.preventDefault();
-            if (isOpen && activeIndex >= 0) pick(items[activeIndex].text);
-            else { close(); onPick(); }
+            refresh();
             return;
         }
-        if (!isOpen) return;
-        if (e.key === "ArrowDown") { e.preventDefault(); setActive((activeIndex + 1) % items.length); }
-        else if (e.key === "ArrowUp") { e.preventDefault(); setActive((activeIndex - 1 + items.length) % items.length); }
-        else if (e.key === "Escape") close();
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (isOpen && activeIndex >= 0)
+                pick(items[activeIndex].text);
+            else {
+                close();
+                onPick();
+            }
+            return;
+        }
+        if (!isOpen)
+            return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActive((activeIndex + 1) % items.length);
+        }
+        else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActive((activeIndex - 1 + items.length) % items.length);
+        }
+        else if (e.key === "Escape")
+            close();
     });
     box.addEventListener("mousedown", e => e.preventDefault());
     box.addEventListener("click", e => {
         const remove = e.target.closest("[data-remove]");
-        if (remove) { SearchHistory.remove(remove.getAttribute("data-remove")); refresh(); return; }
+        if (remove) {
+            SearchHistory.remove(remove.getAttribute("data-remove"));
+            refresh();
+            return;
+        }
         const item = e.target.closest(".suggestion-item");
-        if (item) pick(item.getAttribute("data-value"));
+        if (item)
+            pick(item.getAttribute("data-value"));
     });
-    document.addEventListener("click", e => { if (!e.target.closest("#mapSearchWrap")) close(); });
+    document.addEventListener("click", e => { if (!e.target.closest("#mapSearchWrap"))
+        close(); });
     return { close };
 }
-
 export function initSearch({ map, locate }) {
-    const L = window.L;
     let pin = null;
-    let current = null; // { title, address, lat, lng }
-
+    let current = null;
     const pinIcon = L.divIcon({ className: "search-pin", html: '<div class="search-pin-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
-
     function popupHtml() {
         const state = store.get();
+        if (!current)
+            return "";
         const place = locate(current.lat, current.lng);
         const region = place ? state.regions[place.regionId] || null : null;
         return searchPopup({ ...current, place, region, thresholds: effectiveThresholds(state), now: state.now, model: state.model });
     }
-
     /** Põe (ou move) o pino com o popup de risco do ponto. Usado pela busca e por "minha localização". */
     function placePin(point, { zoom = 15, extra = null } = {}) {
         current = point;
-        if (pin) map.removeLayer(pin);
-        if (extra) map.removeLayer(extra);
+        if (pin)
+            map.removeLayer(pin);
+        if (extra)
+            map.removeLayer(extra);
         pin = L.marker([point.lat, point.lng], { icon: pinIcon, title: point.title, alt: point.title })
             .addTo(map)
             .bindPopup(popupHtml(), { maxWidth: 330 })
@@ -149,17 +167,17 @@ export function initSearch({ map, locate }) {
         map.flyTo([point.lat, point.lng], zoom, { duration: 1.2 });
         return pin;
     }
-
     // O pino acompanha as atualizações de dados, sem nova busca.
     store.subscribe(s => [s.regions, effectiveThresholds(s), s.now], () => {
-        if (pin && current) pin.setPopupContent(popupHtml());
+        if (pin && current)
+            pin.setPopupContent(popupHtml());
     }, { immediate: false });
-
     async function doSearch() {
         const input = $("#searchInput");
         const btn = $("#searchBtn");
         const q = input.value.trim();
-        if (!q) return;
+        if (!q)
+            return;
         suggestions.close();
         hideTooltip();
         hideToast();
@@ -170,25 +188,33 @@ export function initSearch({ map, locate }) {
             const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=" +
                 encodeURIComponent(`${q}, São Paulo, Brasil`);
             const resp = await fetch(url, { headers: { "Accept-Language": "pt-BR" } });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (!resp.ok)
+                throw new Error(`HTTP ${resp.status}`);
             const data = await resp.json();
-            if (!Array.isArray(data) || !data.length) { showToast("Endereço não encontrado em SP."); return; }
+            if (!Array.isArray(data) || !data.length) {
+                showToast("Endereço não encontrado em SP.");
+                return;
+            }
             const lat = parseFloat(data[0].lat);
             const lng = parseFloat(data[0].lon);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast("Endereço não encontrado em SP."); return; }
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                showToast("Endereço não encontrado em SP.");
+                return;
+            }
             const address = String(data[0].display_name || q);
             placePin({ title: address.split(",")[0], address, lat, lng });
             SearchHistory.add(q);
-        } catch (err) {
+        }
+        catch (err) {
             console.warn("Falha na busca:", err);
             showToast("Erro de conexão com o serviço de endereços (Nominatim).");
-        } finally {
+        }
+        finally {
             btn.classList.remove("busy");
             btn.removeAttribute("aria-busy");
             btn.disabled = false;
         }
     }
-
     const suggestions = initSuggestions(doSearch);
     $("#searchBtn").addEventListener("click", doSearch);
     return { placePin };

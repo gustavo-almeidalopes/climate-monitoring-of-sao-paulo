@@ -5,6 +5,7 @@ from sqlalchemy import inspect, text
 from app.db.base import Base
 from app.db.session import engine
 from app.models import (  # noqa: F401
+    alerts,
     forecast_reading,
     hourly_observation,
     model_run,

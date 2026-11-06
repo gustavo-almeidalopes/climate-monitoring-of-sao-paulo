@@ -1,0 +1,23 @@
+{
+  // Front-end: src/*.ts -> js/*.js (módulos ES, um arquivo por módulo, sem bundler).
+  // O js/ gerado é versionado para o deploy estático (Vercel) e o FastAPI servirem sem build;
+  // o CI confere que js/ corresponde a src/ (npm run check:build).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "rootDir": "src",
+    "outDir": "js",
+    "strict": true,
+    "noImplicitAny": false,
+    "noFallthroughCasesInSwitch": true,
+    "removeComments": false,
+    "newLine": "lf",
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "types": []
+  },
+  "include": ["src/**/*.ts"]
+}

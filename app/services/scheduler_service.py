@@ -72,12 +72,24 @@ class SchedulerService:
                         history_retention_days=self.history_retention_days,
                         forecast_retention_hours=self.forecast_retention_hours,
                     )
+                    await self.notify_level_rises(session)
                 self._last_success_at = datetime.now(tz=timezone.utc)
                 self._last_error = None
             except Exception as exc:  # pragma: no cover - defensivo operacional
                 self._last_error = str(exc)
             finally:
                 self._running = False
+
+    async def notify_level_rises(self, session: AsyncSession) -> list[dict]:
+        """Alertas ativos (Web Push, WhatsApp) quando o nível de uma região sobe para Alto ou Crítico."""
+        from app.services import alert_service
+
+        try:
+            _, current = await self.weather_service.get_current_all(session)
+            return await alert_service.run_cycle(session, current)
+        except Exception as exc:  # pragma: no cover - alerta nunca derruba a coleta de clima
+            print(f"[Alertas] Falha ao avaliar/enviar alertas: {exc}")
+            return []
 
     def status(self) -> dict:
         next_run_at = None

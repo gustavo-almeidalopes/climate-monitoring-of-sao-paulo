@@ -1,0 +1,14 @@
+.git
+node_modules
+e2e
+tests
+docs
+logs
+services/ops-java/target
+services/ops-java/graph-cache
+deploy
+src
+*.db
+.env
+.env.*
+__pycache__

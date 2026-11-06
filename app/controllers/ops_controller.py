@@ -1,7 +1,7 @@
 """API de operação (Fase 3) — /api/v1/ops/*. Rotas novas; nenhuma rota existente muda."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -141,6 +141,17 @@ async def arrive(incident_id: int, db: AsyncSession = Depends(get_db), role: str
 async def resolve(incident_id: int, body: ResolveIn, db: AsyncSession = Depends(get_db),
                   role: str = Depends(require("operador"))) -> dict:
     return await _guard(ops_service.resolve)(db, incident_id, note=body.note, role=role)
+
+
+@router.get("/report/context")
+async def report_context(hours: int = Query(default=24, ge=1, le=24 * 30), db: AsyncSession = Depends(get_db),
+                         _: str = Depends(require("gestor"))) -> dict:
+    """Chuva acumulada e acerto do modelo na janela (sem as ocorrências).
+
+    Usado pelo serviço Java de operação para montar o relatório pós-evento.
+    """
+    end = ops_service._now()
+    return await ops_service.report_context(db, start=end - timedelta(hours=hours), end=end)
 
 
 @router.get("/report")

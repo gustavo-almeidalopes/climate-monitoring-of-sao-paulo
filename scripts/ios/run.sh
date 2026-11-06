@@ -18,6 +18,14 @@ fi
 set -a; . "$ENV_DEV"; set +a
 export DEV_CLIENT_LOG=true ENVIRONMENT=development
 
+echo "== Front-end (TypeScript)"
+if command -v npm >/dev/null 2>&1; then
+    (cd "$ROOT" && { [ -d node_modules ] || npm ci --no-audit --no-fund >/dev/null; } && npm run --silent build) \
+        && ok "src/*.ts compilado para js/" || die "Falha ao compilar o TypeScript (rode: npm run build)."
+else
+    warn "npm ausente: usando o js/ já versionado (instale Node para editar src/*.ts)."
+fi
+
 echo "== Backend"
 if server_running; then
     ok "Servidor já está no ar em http://localhost:${PORT}"

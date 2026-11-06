@@ -1,0 +1,37 @@
+# ClimaSP no Kubernetes (para hospedagem por órgão público):  kubectl apply -k deploy
+# Antes: cp deploy/secrets.env.example deploy/secrets.env e preencha (o arquivo real fica fora do git).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: climasp
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: climasp
+resources:
+  - k8s/namespace.yaml
+  - k8s/postgres.yaml
+  - k8s/api.yaml
+  - k8s/ops.yaml
+  - k8s/gateway.yaml
+  - k8s/ingress.yaml
+configMapGenerator:
+  - name: climasp-config
+    literals:
+      - ENVIRONMENT=production
+      - PYTHON_API_URL=http://api:8000
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/climasp_ops
+      - DATABASE_USER=climasp
+      - ROUTING_ENGINE=auto
+  - name: gateway-nginx
+    files:
+      - default.conf=nginx.conf
+secretGenerator:
+  - name: climasp-secrets
+    envs:
+      - secrets.env
+images:
+  - name: climasp-api
+    newName: ghcr.io/gustavo-almeidalopes/climasp-api
+    newTag: latest
+  - name: climasp-ops
+    newName: ghcr.io/gustavo-almeidalopes/climasp-ops
+    newTag: latest

@@ -21,6 +21,33 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: pytest -q
 
+  ops-java:
+    # Serviço Java de operação: testes de contrato contra PostGIS real (Testcontainers usa o Docker do runner).
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/ops-java
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: services/ops-java/pom.xml
+      - run: mvn -B test
+
+  deploy-config:
+    # docker-compose.yml e manifestos Kubernetes (kustomize) bem formados; kubectl já vem no runner.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config -q
+      - run: cp deploy/secrets.env.example deploy/secrets.env && kubectl kustomize deploy > /tmp/climasp.yaml
+      - run: grep -c '^kind:' /tmp/climasp.yaml
+
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -33,7 +60,12 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: e2e/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            e2e/package-lock.json
+      # TypeScript: tipos sem erro e js/ (versionado) idêntico ao que src/*.ts gera.
+      - run: npm ci && npm run check:build
+        working-directory: .
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --grep-invert @screenshot

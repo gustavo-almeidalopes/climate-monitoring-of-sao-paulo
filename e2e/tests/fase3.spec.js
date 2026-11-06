@@ -177,3 +177,15 @@ test("painel de operação sem emojis nem glifos (ícones SVG + texto)", async (
     const text = await page.evaluate(() => document.body.innerText);
     expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{25A0}-\u{25FF}\u{2190}-\u{21FF}\u{2022}\u{FE0F}]/u);
 });
+
+test("com o serviço Java no ar, o despacho usa as rotas calculadas no servidor (GraphHopper)", async ({ page }, info) => {
+    const { db } = await open(page, info, { ops: { serverNearest: true } });
+    await login(page);
+    await page.locator("#opsPick").click();
+    const box = await page.locator("#map").boundingBox();
+    await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.5);
+    await expect(page.locator("#opsCandidates .cand")).toHaveCount(3);
+    expect(db.calls.some(c => c.startsWith("GET /nearest"))).toBe(true);
+    expect(db.calls.filter(c => c.startsWith("OSRM"))).toEqual([]); // nada calculado no navegador
+    await expect(page.locator("#opsCandidates")).not.toContainText("estimativa");
+});

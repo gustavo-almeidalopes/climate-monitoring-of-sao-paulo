@@ -1,0 +1,61 @@
+{
+ "format": "onnx",
+ "model_version": "202611060819",
+ "target": "chuva acumulada nas próximas 3h >= 10.0 mm",
+ "horizon_hours": 3,
+ "heavy_rain_mm": 10.0,
+ "decision_threshold": 0.02307995346345698,
+ "feature_columns": [
+  "precip_1h",
+  "precip_lag1",
+  "precip_lag2",
+  "rain_3h",
+  "rain_6h",
+  "rain_12h",
+  "rain_24h",
+  "rain_72h",
+  "rain_168h",
+  "max_1h_24h",
+  "hours_since_rain",
+  "temperature_c",
+  "humidity_percent",
+  "dew_point_c",
+  "dewpoint_depression",
+  "temp_delta_3h",
+  "humidity_delta_3h",
+  "dew_point_delta_3h",
+  "pressure_hpa",
+  "pressure_tend_3h",
+  "pressure_tend_6h",
+  "pressure_tend_24h",
+  "cloud_cover_percent",
+  "cloud_delta_3h",
+  "cloud_mean_6h",
+  "wind_kmh",
+  "wind_gust_kmh",
+  "wind_u",
+  "wind_v",
+  "hour_sin",
+  "hour_cos",
+  "doy_sin",
+  "doy_cos"
+ ],
+ "input": {
+  "name": "X",
+  "dtype": "float32",
+  "shape": [
+   null,
+   33
+  ],
+  "missing": "NaN"
+ },
+ "outputs": {
+  "classifier": "probabilities[:, 1] = probabilidade de chuva forte no horizonte",
+  "regressor": "variable[:, 0] = chuva esperada (mm) no horizonte"
+ },
+ "files": {
+  "classifier": "flood_risk_classifier.onnx",
+  "regressor": "flood_risk_regressor.onnx"
+ },
+ "note": "Gerado por scripts/export_onnx.py a partir de flood_risk_model.joblib; o treino é em Python."
+}

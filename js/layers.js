@@ -11,11 +11,8 @@ import { api } from "./api.js";
 import { clusterLayer, clusterPin, svgPin } from "./cluster.js";
 import { REGION_META, districtLabel } from "./regions.js";
 import { $$, escapeHtml, fmtClock, normalizeName, stripEmoji, timeAgo } from "./util.js";
-
-const L = window.L;
 const DATA = "data/geo/";
 const RAINVIEWER = "https://api.rainviewer.com/public/weather-maps.json";
-
 /* Camadas do GeoSampa liberadas para exibição (licença verificada em docs/fase-2/fontes.md). */
 export const GEOSAMPA_ENABLED = {
     area_inundavel: { label: "Área inundável — PDMAT3, tempo de retorno de 100 anos", kind: "area" },
@@ -24,69 +21,85 @@ export const GEOSAMPA_ENABLED = {
     risco_ocorrencia_inundacao: { label: "Ocorrência de inundação registrada", kind: "point" },
     reservatorio_amortecimento: { label: "Reservatório de amortecimento (piscinão)", kind: "area" },
 };
-
 async function getJson(url) {
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} em ${url}`);
+    if (!resp.ok)
+        throw new Error(`HTTP ${resp.status} em ${url}`);
     return resp.json();
 }
-
 function bindToggle(key, layer, map, onFirstEnable) {
     const btn = document.querySelector(`.lp-row[data-layer="${key}"]`);
-    if (!btn) return;
+    if (!btn)
+        return;
     btn.hidden = false;
     let loaded = !onFirstEnable;
-    const apply = async on => {
+    const apply = async (on) => {
         btn.classList.toggle("on", on);
         btn.setAttribute("aria-checked", String(on));
-        if (on && !loaded) { loaded = true; try { await onFirstEnable(); } catch (err) { console.warn(err); } }
-        if (on) map.addLayer(layer); else map.removeLayer(layer);
+        if (on && !loaded) {
+            loaded = true;
+            try {
+                await onFirstEnable?.();
+            }
+            catch (err) {
+                console.warn(err);
+            }
+        }
+        if (on)
+            map.addLayer(layer);
+        else
+            map.removeLayer(layer);
     };
     btn.addEventListener("click", () => apply(!btn.classList.contains("on")));
-    if (btn.classList.contains("on")) apply(true);
+    if (btn.classList.contains("on"))
+        apply(true);
 }
-
 function streetPopup(p) {
     return `<div class="pu ps"><div class="pu-name">${escapeHtml(p.name || p.group)}</div>
         <div class="ps-note"><strong>Via citada como alagável</strong> no roadmap do projeto (${escapeHtml(p.group)}).</div>
         <div class="ps-note">${escapeHtml(p.fonte_classificacao || "")}</div>
         <div class="pu-note">Geometria: © colaboradores do OpenStreetMap (ODbL).</div></div>`;
 }
-
 function waterPopup(p) {
     return `<div class="pu ps"><div class="pu-name">${escapeHtml(p.name || "Curso d'água sem nome")}</div>
         <div class="ps-note">${p.covered ? "Canalizado/tamponado (subterrâneo neste trecho)" : "A céu aberto"} · ${escapeHtml(p.kind || "")}</div>
         <div class="pu-note">© colaboradores do OpenStreetMap (ODbL).</div></div>`;
 }
-
 /** "2026-01-25Z" vira "25/01/2026" (datas do GeoSampa). */
 function fmtDay(value) {
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ""));
     return m ? `${m[3]}/${m[2]}/${m[1]}` : String(value || "");
 }
-
 function areaPopup(label, layerName, p) {
     const rows = [];
-    if (p.nm_area_risco_hidrologico) rows.push(`Área: ${escapeHtml(p.nm_area_risco_hidrologico)}`);
-    if (p.tx_grau_risco_hidrologico) rows.push(`Grau de risco: ${escapeHtml(p.tx_grau_risco_hidrologico)} (R1 baixo … R4 muito alto)`);
-    if (p.tx_tipo_processo) rows.push(`Processo: ${escapeHtml(p.tx_tipo_processo.toLowerCase())}`);
-    if (p.qt_moradia != null) rows.push(`${escapeHtml(p.qt_moradia)} moradia(s) no setor`);
-    if (p.dt_vistoria) rows.push(`Vistoria: ${escapeHtml(fmtDay(p.dt_vistoria))}`);
-    if (p.qt_tempo_retorno) rows.push(`Tempo de retorno: ${escapeHtml(p.qt_tempo_retorno)} anos`);
-    if (p.nm_reservatorio) rows.push(`Reservatório: ${escapeHtml(p.nm_reservatorio)}${p.cd_reservatorio ? ` (${escapeHtml(p.cd_reservatorio)})` : ""}`);
-    if (p.tx_tipo_esvaziamento) rows.push(`Esvaziamento: ${escapeHtml(p.tx_tipo_esvaziamento)}${/bomba/i.test(p.tx_tipo_esvaziamento) ? " — ponto de bombeamento" : ""}`);
-    if (p.qt_volume_metro) rows.push(`Volume: ${escapeHtml(Number(p.qt_volume_metro).toLocaleString("pt-BR"))} m³`);
-    if (p.tx_monitoramento_tempo_real) rows.push(`Monitoramento em tempo real: ${escapeHtml(p.tx_monitoramento_tempo_real)}`);
+    if (p.nm_area_risco_hidrologico)
+        rows.push(`Área: ${escapeHtml(p.nm_area_risco_hidrologico)}`);
+    if (p.tx_grau_risco_hidrologico)
+        rows.push(`Grau de risco: ${escapeHtml(p.tx_grau_risco_hidrologico)} (R1 baixo … R4 muito alto)`);
+    if (p.tx_tipo_processo)
+        rows.push(`Processo: ${escapeHtml(p.tx_tipo_processo.toLowerCase())}`);
+    if (p.qt_moradia != null)
+        rows.push(`${escapeHtml(p.qt_moradia)} moradia(s) no setor`);
+    if (p.dt_vistoria)
+        rows.push(`Vistoria: ${escapeHtml(fmtDay(p.dt_vistoria))}`);
+    if (p.qt_tempo_retorno)
+        rows.push(`Tempo de retorno: ${escapeHtml(p.qt_tempo_retorno)} anos`);
+    if (p.nm_reservatorio)
+        rows.push(`Reservatório: ${escapeHtml(p.nm_reservatorio)}${p.cd_reservatorio ? ` (${escapeHtml(p.cd_reservatorio)})` : ""}`);
+    if (p.tx_tipo_esvaziamento)
+        rows.push(`Esvaziamento: ${escapeHtml(p.tx_tipo_esvaziamento)}${/bomba/i.test(p.tx_tipo_esvaziamento) ? " — ponto de bombeamento" : ""}`);
+    if (p.qt_volume_metro)
+        rows.push(`Volume: ${escapeHtml(Number(p.qt_volume_metro).toLocaleString("pt-BR"))} m³`);
+    if (p.tx_monitoramento_tempo_real)
+        rows.push(`Monitoramento em tempo real: ${escapeHtml(p.tx_monitoramento_tempo_real)}`);
     return `<div class="pu ps"><div class="pu-name">${escapeHtml(label)}</div>
         ${rows.map(r => `<div class="ps-note">${r}</div>`).join("")}
         <div class="pu-note">Fonte: GeoSampa — Prefeitura de São Paulo (camada ${escapeHtml(layerName)}).</div></div>`;
 }
-
 const SUPPORT = {
     hospital: { symbol: "hospital", label: "Hospital" },
     fire_station: { symbol: "flame", label: "Corpo de Bombeiros" },
 };
-
 /** Centros aproximados dos distritos, a partir da grade H3 (média das células). */
 function districtCentroids(hex) {
     const acc = {};
@@ -96,28 +109,28 @@ function districtCentroids(hex) {
         const lng = ring.reduce((s, c) => s + c[0], 0) / ring.length;
         const lat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
         const a = acc[p.district] || (acc[p.district] = { lat: 0, lng: 0, n: 0, region: p.region });
-        a.lat += lat; a.lng += lng; a.n += 1;
+        a.lat += lat;
+        a.lng += lng;
+        a.n += 1;
     }
     const out = {};
-    for (const [name, a] of Object.entries(acc)) out[name] = { lat: a.lat / a.n, lng: a.lng / a.n, region: a.region };
+    for (const [name, a] of Object.entries(acc))
+        out[name] = { lat: a.lat / a.n, lng: a.lng / a.n, region: a.region };
     return out;
 }
-
 /** Distrito citado num texto de notícia (nomes normalizados, palavra inteira). */
 export function districtMentioned(text, names) {
     const t = ` ${normalizeName(text).replace(/[^A-Z0-9 ]/g, " ")} `;
     return names.filter(n => t.includes(` ${n} `));
 }
-
 export function initLayers(map) {
     /* ---------- cursos d'água ---------- */
     const water = L.geoJSON(null, {
         pane: "lines",
-        style: f => ({ color: "#3B7DD8", weight: f.properties.kind === "river" ? 3 : 1.6, opacity: 0.85, dashArray: f.properties.covered ? "4 4" : null }),
+        style: f => ({ color: "#3B7DD8", weight: f?.properties.kind === "river" ? 3 : 1.6, opacity: 0.85, dashArray: f?.properties.covered ? "4 4" : undefined }),
         onEachFeature: (f, layer) => layer.bindPopup(waterPopup(f.properties), { maxWidth: 280 }),
     });
     bindToggle("waterways", water, map, async () => water.addData(await getJson(`${DATA}waterways.geojson`)));
-
     /* ---------- vias alagáveis ---------- */
     const streets = L.layerGroup();
     bindToggle("flood_streets", streets, map, async () => {
@@ -129,7 +142,6 @@ export function initLayers(map) {
             onEachFeature: (f, layer) => layer.bindPopup(streetPopup(f.properties), { maxWidth: 300 }),
         }).addTo(streets);
     });
-
     /* ---------- pontos de apoio ---------- */
     const support = clusterLayer(map, [], {
         iconFor: p => svgPin(SUPPORT[p.kind].symbol, p.kind),
@@ -146,7 +158,6 @@ export function initLayers(map) {
             name: f.properties.name, osm: f.properties.osm,
         })));
     });
-
     /* ---------- GeoSampa: manchas e ocorrências ---------- */
     const geosampa = L.layerGroup();
     bindToggle("geosampa", geosampa, map, async () => {
@@ -154,7 +165,8 @@ export function initLayers(map) {
         const available = meta.sources?.geosampa?.camadas || {};
         const occPoints = [];
         for (const [name, cfg] of Object.entries(GEOSAMPA_ENABLED)) {
-            if (!available[`geoportal:${name}`]) continue;
+            if (!available[`geoportal:${name}`])
+                continue;
             const geo = await getJson(`${DATA}geosampa/${name}.geojson`);
             if (cfg.kind === "area") {
                 L.geoJSON(geo, {
@@ -162,10 +174,12 @@ export function initLayers(map) {
                     style: { color: "#2563EB", weight: 1, opacity: 0.8, fillColor: "#3B82F6", fillOpacity: 0.18, className: `gs-${name}` },
                     onEachFeature: (f, layer) => layer.bindPopup(areaPopup(cfg.label, name, f.properties)),
                 }).addTo(geosampa);
-            } else {
+            }
+            else {
                 for (const f of geo.features) {
                     const c = f.geometry && f.geometry.type === "Point" ? f.geometry.coordinates : null;
-                    if (c) occPoints.push({ lat: c[1], lng: c[0], kind: "occurrence", label: cfg.label, props: f.properties });
+                    if (c)
+                        occPoints.push({ lat: c[1], lng: c[0], kind: "occurrence", label: cfg.label, props: f.properties });
                 }
             }
         }
@@ -181,7 +195,6 @@ export function initLayers(map) {
             }).addTo(geosampa);
         }
     });
-
     /* ---------- notícias no mapa ---------- */
     const news = clusterLayer(map, [], {
         iconFor: () => svgPin("newspaper", "news"),
@@ -206,25 +219,25 @@ export function initLayers(map) {
         }
         news.setPoints(points);
         const btn = document.querySelector('.lp-row[data-layer="news_map"] small');
-        if (btn) btn.textContent = points.length ? `${points.length} citando distritos` : "nenhuma cita distritos monitorados";
+        if (btn)
+            btn.textContent = points.length ? `${points.length} citando distritos` : "nenhuma cita distritos monitorados";
     });
-
     /* ---------- radar ---------- */
     const radar = L.layerGroup();
     bindToggle("radar", radar, map, async () => {
         const info = await getJson(RAINVIEWER);
         const frames = info.radar?.past || [];
         const last = frames[frames.length - 1];
-        if (!last) throw new Error("RainViewer sem quadros");
+        if (!last)
+            throw new Error("RainViewer sem quadros");
         L.tileLayer(`${info.host}${last.path}/256/{z}/{x}/{y}/2/1_1.png`, {
             pane: "radar", opacity: 0.6, maxNativeZoom: 7, maxZoom: 19,
             attribution: 'Radar &copy; <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a>',
         }).addTo(radar);
         const small = document.querySelector('.lp-row[data-layer="radar"] small');
-        if (small) small.textContent = `RainViewer · ${fmtClock(last.time * 1000)}`;
+        if (small)
+            small.textContent = `RainViewer · ${fmtClock(last.time * 1000)}`;
     });
-
     $$(".lp-row[data-layer]").forEach(btn => btn.setAttribute("aria-checked", String(btn.classList.contains("on"))));
     return { water, streets, support, news, radar, geosampa };
 }
-
