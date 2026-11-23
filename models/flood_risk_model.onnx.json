@@ -1,10 +1,10 @@
 {
  "format": "onnx",
- "model_version": "202611161553",
+ "model_version": "202611231817",
  "target": "chuva acumulada nas próximas 3h >= 10.0 mm",
  "horizon_hours": 3,
  "heavy_rain_mm": 10.0,
- "decision_threshold": 0.02478415044822678,
+ "decision_threshold": 0.16145107467138617,
  "feature_columns": [
   "precip_1h",
   "precip_lag1",
